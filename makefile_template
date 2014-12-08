@@ -1,0 +1,18 @@
+CC := gcc
+CXX := g++
+CFLAGS := -std=c++11 -I . -shared -fPIC
+
+ifeq ($(UNAME),Darwin)
+	CFLAGS += --stdlib=libc++ -undefined dynamic_lookup
+endif
+
+SRCS := $(wildcard *.cpp)
+TARGETS := $(SRCS:%.cpp=%.so)
+
+all: $(TARGETS)
+
+%.so: %.cpp
+	$(CXX) -o $@ $(CFLAGS) $^
+
+clean:
+	rm *.so
