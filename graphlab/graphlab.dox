@@ -33,11 +33,11 @@ to use native functions instead of Python functions.
 
 \subsection mainpage_minimum_requirements Minimum Requirements
 \b Linux:
- - GraphLab Create 1.2 installation
+ - GraphLab Create 1.1 installation
  - gcc 4.8 and above
 
 \b Mac: 
- - GraphLab Create 1.2 installation
+ - GraphLab Create 1.1 installation
  - XCode 6.1 Command Line Tools. (Apple LLVM version 6.0 (clang-600.0.54))
 
 The sdk also depends on boost 1.55 or above (headers only). We've included
@@ -55,7 +55,7 @@ via GraphLab Create. in this quick start guide. The
 To download the SDK, clone the git repository: 
 
 \code
-~$ git clone https://github.com/graphlab-code/graphlab-sdk.git graphlab-sdk
+~$ git clone https://github.com/graphlab-code/GraphLab-Create-SDK.git graphlab-sdk
 \endcode
 
 The SDK is organized into 4 subdirectories.
@@ -87,8 +87,8 @@ graphlab-sdk$ ipython
 
 Now create a new directory for new extensions:
 \code
-~$ cd && mkdir sdk_test && cd sdk_test
-~/sdk_test$
+~$ cd && mkdir gl_extensions && cd gl_extensions
+~/gl_extensions$
 \endcode
 
 Write the following into a file example.cpp
@@ -111,15 +111,15 @@ END_FUNCTION_REGISTRATION
 
 \b Linux:
 \code{.sh}
-~/sdk_test$ g++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so
+~/gl_extensions$ g++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so
 \endcode
 
 \b Mac:
 \code{.sh}
-~/sdk_test$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup
+~/gl_extensions$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup
 \endcode
 
-\note We provide you with a makefile template at graphlab-sdk/makefile_template.
+\note We provide you with a makefile template: makefile_template.
 </li>
 
 <li>\b Use

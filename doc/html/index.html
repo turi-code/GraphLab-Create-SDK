@@ -123,11 +123,11 @@ Introduction</h1>
 <h2><a class="anchor" id="mainpage_minimum_requirements"></a>
 Minimum Requirements</h2>
 <p><b>Linux:</b> </p><ul>
-<li>GraphLab Create 1.2 installation</li>
+<li>GraphLab Create 1.1 installation</li>
 <li>gcc 4.8 and above</li>
 </ul>
 <p><b>Mac:</b> </p><ul>
-<li>GraphLab Create 1.2 installation</li>
+<li>GraphLab Create 1.1 installation</li>
 <li>XCode 6.1 Command Line Tools. (Apple LLVM version 6.0 (clang-600.0.54))</li>
 </ul>
 <p>The sdk also depends on boost 1.55 or above (headers only). We've included a copy of boost 1.56 under <b>boost/</b>.</p>
@@ -138,7 +138,7 @@ Quick Start</h2>
 <li>
 <p class="startli"><b>Download</b> SDK</p>
 <p>To download the SDK, clone the git repository:</p>
-<div class="fragment"><div class="line">~$ git clone https:<span class="comment">//github.com/graphlab-code/graphlab-sdk.git graphlab-sdk</span></div>
+<div class="fragment"><div class="line">~$ git clone https:<span class="comment">//github.com/graphlab-code/GraphLab-Create-SDK.git graphlab-sdk</span></div>
 </div><!-- fragment --><p>The SDK is organized into 4 subdirectories.</p><ul>
 <li><b>graphlab/</b> contains all the required header files</li>
 <li><b>sdk_example/</b> contains all the SDK usage examples</li>
@@ -163,8 +163,8 @@ Quick Start</h2>
 </li>
 <li>
 <p class="startli"><b>Code</b> New Extensions</p>
-<p>Now create a new directory for new extensions: </p><div class="fragment"><div class="line">~$ cd &amp;&amp; mkdir sdk_test &amp;&amp; cd sdk_test</div>
-<div class="line">~/sdk_test$</div>
+<p>Now create a new directory for new extensions: </p><div class="fragment"><div class="line">~$ cd &amp;&amp; mkdir gl_extensions &amp;&amp; cd gl_extensions</div>
+<div class="line">~/gl_extensions$</div>
 </div><!-- fragment --><p>Write the following into a file example.cpp </p><div class="fragment"><div class="line"><span class="preprocessor">#include &lt;graphlab/sdk/toolkit_function_macros.hpp&gt;</span></div>
 <div class="line"><span class="keyword">using namespace </span><a class="code" href="namespacegraphlab.html">graphlab</a>;</div>
 <div class="line"></div>
@@ -180,9 +180,9 @@ Quick Start</h2>
 </li>
 <li>
 <p class="startli"><a class="el" href="index.html#mainpage_extension_compilation">Compile</a></p>
-<p><b>Linux:</b> </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;~/sdk_test$ g++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so</div>
-</div><!-- fragment --><p><b>Mac:</b> </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;~/sdk_test$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup</div>
-</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>We provide you with a makefile template at graphlab-sdk/makefile_template. </dd></dl>
+<p><b>Linux:</b> </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;~/gl_extensions$ g++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so</div>
+</div><!-- fragment --><p><b>Mac:</b> </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;~/gl_extensions$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup</div>
+</div><!-- fragment --><dl class="section note"><dt>Note</dt><dd>We provide you with a makefile template: makefile_template. </dd></dl>
 </li>
 <li>
 <p class="startli"><b>Use</b> </p>
@@ -243,7 +243,7 @@ License</h1>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Dec 4 2014 11:53:02 for GraphLab Create SDK API by
+    <li class="footer">Generated on Wed Dec 10 2014 14:35:58 for GraphLab Create SDK API by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.8 </li>
   </ul>

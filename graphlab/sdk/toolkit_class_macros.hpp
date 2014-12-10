@@ -393,7 +393,8 @@ namespace docstring_macro_impl {
  * Ends a class member registration block.
  * See BEGIN_CLASS_MEMBER_REGISTRATION
  */
-#define END_CLASS_MEMBER_REGISTRATION registered = true; }
+#define END_CLASS_MEMBER_REGISTRATION \
+     registered = true; }
 
 
 /**
