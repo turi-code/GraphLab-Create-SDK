@@ -40,7 +40,6 @@ class gl_gframe : public gl_sframe {
   /*
    * Implicit converters
    */
-  operator gl_sframe() const;
   operator std::shared_ptr<unity_sframe>() const;
   operator std::shared_ptr<unity_sframe_base>() const;
 
