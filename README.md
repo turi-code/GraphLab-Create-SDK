@@ -1,5 +1,5 @@
-GraphLab-Create-SDK
-===================
+GraphLab Create 1.0 SDK (BETA)
+==============================
 
 The GraphLab Create SDK aims to provide 3rd party extensibility to GraphLab Create. The SDK provides:
 
@@ -44,9 +44,11 @@ graphlab-sdk$ ipython
 7
 ```
 
-Full Documentation
-------------------
-See doc/html/index.html
+Documentation
+-------------
+[Place holder for link to documentation on graphlab.com]
+
+Alternatively, you can type `make doc` to build local documentations (requires Doxygen).
 
 License
 -------

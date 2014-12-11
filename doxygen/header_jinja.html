@@ -1,0 +1,71 @@
+{% extends "2col.jinja2" %}
+{% block title %}
+{% raw %}
+<!--BEGIN PROJECT_NAME-->$projectname: $title<!--END PROJECT_NAME-->
+<!--BEGIN !PROJECT_NAME-->$title<!--END !PROJECT_NAME-->
+{% endraw %}
+{% endblock %}
+{% block javascript %}
+<script src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.0/highlight.min.js"></script>
+<script type="text/javascript">hljs.initHighlightingOnLoad();</script>
+{{ super() }}
+<script type="text/javascript">
+require(['bootstrap'], function(bootstrap) {
+                $(function() {
+                        $('.gl-docnav').affix({
+                                offset: {
+                                        top: function() {
+                                        return (this.top = $('.cml-colorbar-top').outerHeight(true) + $('.cml-navbar').outerHeight(true));
+                                },
+                                        bottom: function () {
+                                        return (this.bottom = $('.footer').outerHeight(true));
+                                }
+                                }
+                                });
+                        });
+                });
+</script>
+<link href="$relpath^$stylesheet" rel="stylesheet" type="text/css" />
+$extrastylesheet
+ <script>
+$(document).ready ( function(){
+ $('.gl_right_bar').append($('#MSearchBox'));
+ $('.gl_right_bar').append($('#side-nav'));
+ });
+ </script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="$relpath^tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="$relpath^dynsections.js"></script>
+<link href="/styles/graphlab.hl.light.css" rel="stylesheet" />
+{% endblock %}
+
+{% block gl_right_bar %}
+{% raw %}
+ $treeview
+ $search
+ $mathjax
+{% endraw %}
+{% endblock %}
+
+{% block gl_main %}
+{% raw %}
+
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+
+<!--BEGIN TITLEAREA-->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <!--BEGIN DISABLE_INDEX-->
+   <!--BEGIN SEARCHENGINE-->
+   <td>$searchbox</td>
+   <!--END SEARCHENGINE-->
+  <!--END DISABLE_INDEX-->
+ </tr>
+ </tbody>
+</table>
+</div>
+<!--END TITLEAREA-->
+<!-- end header part -->
