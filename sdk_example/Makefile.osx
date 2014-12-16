@@ -1,2 +1,0 @@
-example1.so: example1.cpp
-	clang++ -stdlib=libc++ -std=c++11 $^ -I ../graphlab -I ../../../../../deps/local/include -shared -fPIC -o $@ -undefined dynamic_lookup

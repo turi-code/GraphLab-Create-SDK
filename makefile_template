@@ -2,7 +2,8 @@ CC := gcc
 CXX := g++
 CFLAGS := -std=c++11 -I . -shared -fPIC
 
-ifeq ($(UNAME),Darwin)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
 	CFLAGS += --stdlib=libc++ -undefined dynamic_lookup
 endif
 
