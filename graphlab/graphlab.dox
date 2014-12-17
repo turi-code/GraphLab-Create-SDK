@@ -8,7 +8,7 @@ See \ref page_graphlab_extension_interface for the tutorial.
 See \ref page_userguide_sframe and \ref page_userguide_sgraph for the tutorial.
 
 \defgroup group_gl_flexible_type Flexible Type
-The \ref graphlab::flexible_type is object used to provide runtime dynamic
+The \ref graphlab::flexible_type is an object used to provide runtime dynamic
 typing and is automatic self-managing union between a \ref flex_type_enum "collection of types".
 See the documentation for \ref graphlab::flexible_type for details.
 
@@ -111,20 +111,27 @@ END_FUNCTION_REGISTRATION
 
 \b Linux:
 \code{.sh}
-~/gl_extensions$ g++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so
+~/gl_extensions$ g++ -std=c++11 example.cpp -I ../graphlab-sdk -shared -fPIC -o example.so
 \endcode
 
 \b Mac:
 \code{.sh}
-~/gl_extensions$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup
+~/gl_extensions$ clang++ -stdlib=libc++ -std=c++11 example.cpp -I ../graphlab-sdk -shared -fPIC -o example.so -undefined dynamic_lookup
 \endcode
 
-\note We provide you with a makefile template: makefile_template.
+\b Makefile
+We provide you with a template makefile at the root of the project called makefile_template.
+
+It will search for all cpp files, and compile each one into a loadable extension module.
+
+To use the template, copy it to your own project folder, and rename it to makefile.
+You need to edit the makefile and change location of "GRAPHLAB_HOME_SDK" to your sdk installation
+directory.
 </li>
 
-<li>\b Use
+<li>\b Use the new extension
 
-Where example.so is in the current directory:
+Assume example.so is in the current directory.
 \code{.py}
 import graphlab as gl
 import example
@@ -132,6 +139,7 @@ print example.add_integers(5, 10)
 # or equivalently
 print gl.extensions.example.add_integers(5, 10)
 \endcode
+\note The <code>graphlab</code> module must be imported before any extensions.
 </li>
 
 </ol>
@@ -157,26 +165,26 @@ located in a system header location.
 
 \a Command:
 \code{.sh}
-g++ -std=c++11 example.cpp -I /path/to/graphlab_sdk -shared -fPIC -o example.so
+g++ -std=c++11 example.cpp -I /path/to/graphlab-sdk -shared -fPIC -o example.so
 \endcode
 
 \a Makefile
 \code{Makefile}
 example.so: example.cpp
-	g++ -std=c++11 $^ -I /path/to/graphlab_sdk -shared -fPIC -o $@
+	g++ -std=c++11 $^ -I /path/to/graphlab-sdk -shared -fPIC -o $@
 \endcode
 
 \b Mac
 
 \a Command:
 \code{.sh}
-clang++ -stdlib=libc++ -std=c++11 example.cpp -I /path/to/graphlab_sdk -shared -fPIC -o example.so -undefined dynamic_lookup
+clang++ -stdlib=libc++ -std=c++11 example.cpp -I /path/to/graphlab-sdk -shared -fPIC -o example.so -undefined dynamic_lookup
 \endcode
 
 \a Makefile:
 \code{Makefile}
 example.so: example.cpp
-	clang++ -stdlib=libc++ -std=c++11 $^ -I /path/to/graphlab_sdk -shared -fPIC -o $@ -undefined dynamic_lookup
+	clang++ -stdlib=libc++ -std=c++11 $^ -I /path/to/graphlab-sdk -shared -fPIC -o $@ -undefined dynamic_lookup
 \endcode
 
 \section main_page_api_abi_compatibility API and ABI Compatibility

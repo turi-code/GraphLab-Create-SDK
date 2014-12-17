@@ -1813,7 +1813,7 @@ class gl_sarray_writer {
   gl_sarray close();
 
   /**
-   * Returns the number of segments of the Aarray; this is the same value
+   * Returns the number of segments of the SArray; this is the same value
    * provided on construction of the writer.
    */
   size_t num_segments() const;

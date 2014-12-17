@@ -6,8 +6,6 @@ ifeq ($(UNAME_S),Darwin)
 	CXXFLAGS += --stdlib=libc++ -undefined dynamic_lookup
 endif
 
-all: sdk_example 
-
 #### SDK Examples ##### 
 EXAMPLE_SRCS := $(wildcard sdk_example/*.cpp)
 EXAMPLE_TARGETS := $(EXAMPLE_SRCS:%.cpp=%.so)
@@ -24,3 +22,7 @@ doc:
 #### Clean Target ####
 clean:
 	rm sdk_example/*.so
+
+
+#### All targets ####
+all: sdk_example 

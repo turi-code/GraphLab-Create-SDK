@@ -12,7 +12,8 @@
 #ifdef NDEBUG
 #define GL_OPT_ATTR(...) __attribute__((__VA_ARGS__))
 #else
-#define GL_OPT_ATTR(...)
+// put it as hot; this is more-or-less ignored in the ; the "cold" ones have their own attribute def.
+#define GL_OPT_ATTR(...) __attribute__((hot)) 
 #endif
 
 #ifdef __clang__

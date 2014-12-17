@@ -1,6 +1,7 @@
 CC := gcc
 CXX := g++
-CFLAGS := -std=c++11 -I . -shared -fPIC
+CFLAGS := -std=c++11 -shared -fPIC
+GRAPHLAB_SDK_HOME := .
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -13,7 +14,7 @@ TARGETS := $(SRCS:%.cpp=%.so)
 all: $(TARGETS)
 
 %.so: %.cpp
-	$(CXX) -o $@ $(CFLAGS) $^
+	$(CXX) -o $@ $(CFLAGS) -I $(GRAPHLAB_SDK_HOME) $^
 
 clean:
 	rm *.so

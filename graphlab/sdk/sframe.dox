@@ -30,6 +30,9 @@ namespace graphlab {
 
  For instance:
  \code
+ #include <graphlab/sdk/toolkit_function_macros.hpp>
+ #include <graphlab/sdk/gl_sarray.hpp>
+
  // creates an array of 5 integers
  gl_sarray g({1,2,3,4,5}); 
  
@@ -498,7 +501,7 @@ namespace graphlab {
 class geometric_mean: public group_aggregate_value {
  public:
 
-  geometric_mean() { prod = 1.0; num_examples = 1; }
+  geometric_mean() { prod = 1.0; num_examples = 0; }
 
   std::string name() const { return "geometric_mean"; }
 

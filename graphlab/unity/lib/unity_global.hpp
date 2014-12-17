@@ -15,8 +15,6 @@
 #include <graphlab/unity/lib/toolkit_function_registry.hpp>
 #include <graphlab/unity/lib/toolkit_class_registry.hpp>
 #include <unity/lib/api/unity_global_interface.hpp>
-#include <metric/metrics_server.hpp>
-#include <metric/simple_metrics_service.hpp>
 
 namespace graphlab {
 

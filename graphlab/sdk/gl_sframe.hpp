@@ -375,8 +375,10 @@ groupby_descriptor_type ARGMIN(const std::string& agg, const std::string& out);
  * Column Creation And Referencing
  * \code
  * gl_sframe sf;
- * sf["a"] = {1,2,3,4,5}
+ * sf["a"] = gl_sarray{1,2,3,4,5};
+ * gl_sarray a_5_element_sarray{1,1,1,1,1};
  * sf["b"] = a_5_element_sarray;
+ * gl_sarray some_other_sarray{2,2,2,2,2};
  * sf["c"] = sf["a"] / sf["b"] + some_other_sarray;
  * \endcode
  *

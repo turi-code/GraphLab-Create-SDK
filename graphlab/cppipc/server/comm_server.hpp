@@ -336,10 +336,10 @@ class comm_server {
   inline void delete_object(size_t objectid) {
     boost::lock_guard<boost::mutex> guard(registered_object_lock);
    if(registered_objects.count(objectid) != 1) {
-     logstream(LOG_EMPH) << "Deleting already deleted object " << objectid << std::endl;
+     logstream(LOG_DEBUG) << "Deleting already deleted object " << objectid << std::endl;
    }
    inv_registered_objects.erase(registered_objects[objectid].get());
-   logstream(LOG_EMPH) << "Deleting Object " << objectid << std::endl;
+   logstream(LOG_DEBUG) << "Deleting Object " << objectid << std::endl;
    registered_objects.erase(objectid);
   }
 
@@ -392,7 +392,7 @@ class comm_server {
       return inv_registered_objects.at(object.get());
     }
     size_t id = get_next_object_id();
-    logstream(LOG_EMPH) << "Registering Object " << id << std::endl;
+    logstream(LOG_DEBUG) << "Registering Object " << id << std::endl;
     registered_objects.insert({id, std::static_pointer_cast<void>(object)});
     inv_registered_objects.insert({object.get(), id});
     return id;

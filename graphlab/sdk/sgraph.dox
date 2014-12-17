@@ -29,8 +29,11 @@ The simplest way is to add vertices and edges using the \ref gl_sgraph::add_vert
 and \ref gl_sgraph::add_edges methods.
 
 \code
-gl_sframe g;  // empty graph
-gl_sframe vertices { {"vid", {1,2,3} };
+#include <graphlab/sdk/toolkit_function_macros.hpp>
+#include <graphlab/sdk/gl_sgraph.hpp>
+
+gl_sgraph g;  // empty graph
+gl_sframe vertices { {"vid", {1,2,3} } };
 gl_sframe edges { {"src", {1, 3}}, {"dst", {2, 2}} };
 g = g.add_vertices(vertices, "vid").add_edges(edges, "src", "dst");
 \endcode
@@ -45,7 +48,7 @@ used as one of the id fields are treated as meta data fields.
 The second way is to use the \ref gl_sgraph constructor.
 
 \code
-gl_sframe vertices { {"vid", {1,2,3}, {"vdata" : {"foo", "bar", "foobar"}} };
+gl_sframe vertices { {"vid", {1,2,3}, {"vdata", {"foo", "bar", "foobar"}} } };
 gl_sframe edges { {"src", {1,2,3, 2,3,1}}, {"dst", {2,3,1, 1,2,3}} };
 
 // g has edges 1->2, 2->1, 2->3, 3->2, 3->1, 1->3

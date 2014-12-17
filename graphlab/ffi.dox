@@ -328,7 +328,7 @@ and C++. See \ref sec_supported_type_list for a complete list of all supported
 types.
 
 Additionally, functions (all extension functions and published functions of
-extension classes) can take instances of demo_class. For instance, I could publish
+extension classes) can take instances of demo_class. For instance, to publish
 a function:
 
 \code
@@ -346,7 +346,7 @@ c.set_one("hello")
 ret = example.run_concat(c)
 \endcode
 
-To take an instance of a class <i>by reference</i>, I take a shared_ptr to it.
+To take an instance of a class <i>by reference</i>, pass a shared_ptr to it.
 
 \code
 void set_one(std::shared_ptr<demo_class> c) {
@@ -829,9 +829,9 @@ in a way the most general. The variant_type should not accessed directly, but
 can be converted to and from arbitrary types using the \ref to_variant and
 \ref variant_get_value functions. 
 
-For instance, if I am to implement a function that when given a Python list,
+For instance, we can implement a function that when given a Python list,
 if the list is all numbers, returns the sum. And if the list is all strings,
-return the concatenation. I might implement the following:
+return the concatenation. We can implement the function as the following:
 \code
 variant_type add_list(const variant_type& v) {
   std::vector<double> numeric_list;
