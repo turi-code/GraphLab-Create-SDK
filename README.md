@@ -46,7 +46,7 @@ graphlab-sdk$ ipython
 
 Documentation
 -------------
-[Place holder for link to documentation on graphlab.com]
+[http://graphlab.com/products/create/sdk/docs](http://graphlab.com/products/create/sdk/docs/index.html)
 
 Alternatively, you can type `make doc` to build local documentations (requires Doxygen).
 
