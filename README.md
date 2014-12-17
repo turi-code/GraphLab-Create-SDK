@@ -52,4 +52,4 @@ Alternatively, you can type `make doc` to build local documentations (requires D
 
 License
 -------
-This SDK is provided under the 3-clause BSD [license](LICENSE.md).
+This SDK is provided under the 3-clause BSD [license](LICENSE).
