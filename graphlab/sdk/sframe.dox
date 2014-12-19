@@ -2,20 +2,18 @@ namespace graphlab {
 /**
  \page page_userguide_sframe SFrame User Guide
 
- \tableofcontents
-
  \section sec_sarray_intro SArray
 
  SArray (\ref gl_sarray) is an immutable,
  homogeneously typed array object backed by persistent storage.
  It is the building block of scalable data structures in <b>GraphLab Create</b>.
- 
+
  The \ref gl_sarray is a contiguous column of a single type with missing value
  support, and works with disk to support the holding of data that is much
  larger than the machine's main memory. Runtime typing of the gl_sarray is
  managed through the \ref flexible_type, which is an efficient runtime typed
  value. The types supported by the flexible_type are listed in \ref
- flex_type_enum. 
+ flex_type_enum.
 
  \note
  The special type \ref
@@ -23,9 +21,9 @@ namespace graphlab {
  is used to denote a missing value (\b na in R or \b None in Python)
  and can be used in combination with any types.
 
- \subsection sec_sarray_construction Constructing SArray 
+ \subsection sec_sarray_construction Constructing SArray
 
- SArray can be constructed from in memory std::vector<flexible_type> 
+ SArray can be constructed from in memory std::vector<flexible_type>
  or initializer list.
 
  For instance:
@@ -34,13 +32,13 @@ namespace graphlab {
  #include <graphlab/sdk/gl_sarray.hpp>
 
  // creates an array of 5 integers
- gl_sarray g({1,2,3,4,5}); 
- 
+ gl_sarray g({1,2,3,4,5});
+
  // creates an array of 5 doubles
- gl_sarray g1({1.0,2.0,3.0,4.0,5.0}); 
- 
+ gl_sarray g1({1.0,2.0,3.0,4.0,5.0});
+
  // creates an array of 4 doubles with one missing value
- gl_sarray g2({1.0,2.0,3.0,FLEX_UNDEFINED,5.0}); 
+ gl_sarray g2({1.0,2.0,3.0,FLEX_UNDEFINED,5.0});
  \endcode
 
  SArray is homogeneously typed.
@@ -63,14 +61,14 @@ namespace graphlab {
  when used in python it will end up with runtime exception:
  \code
  >>> import graphlab as gl
- >>> import test 
+ >>> import test
  >>> test.bad_sarray()
  ToolkitError: Cannot infer Array type. Not all elements of array are the same type.
  \endcode
- 
+
  We also provide functions to create simple SArrays.
 
- For instance: 
+ For instance:
  \code
  // creates an array of 10 string values equal to "foo".
  gl_sarray g = gl_sarray::from_const( "foo", 10 );
@@ -85,13 +83,13 @@ namespace graphlab {
  which is internally cut into a collection of segments.
  Each segment can be written to independently,
  and the resultant SArray is the effective concatenation of all the segments.
- 
+
  \code
  // Writes an integer SArray of 4 segments.
  gl_sarray_writer writer(flex_type_enum:INTEGER, 4);
- 
+
  // for each segment, write a bunch of 10 values.
- // segment 0 has 10 0's, 
+ // segment 0 has 10 0's,
  // segment 1 has 10 1's,
  // etc
  for (size_t seg = 0;seg < 4; ++seg) {
@@ -99,14 +97,14 @@ namespace graphlab {
      writer.write(i, seg);
    }
  }
- 
+
  gl_sarray sa = writer.close();
- // sa is now an SArray of 40 elements comprising of 
+ // sa is now an SArray of 40 elements comprising of
  // the sequence 10 0's, 10 1's, 10 2's, 10 3's
  \endcode
- 
+
  \note Different segments can be written safely in parallel.
- \note It is not safe to write to the same segment simultanously. 
+ \note It is not safe to write to the same segment simultanously.
 
  \subsection sec_sarray_operation Operators
 
@@ -118,39 +116,39 @@ namespace graphlab {
  gl_sarray a{1,2,3,4,5};
  // an array of 5 exclamation marks
  gl_sarray b = gl_sarray::from_const("!", 5);
- 
+
  auto ret = (2 * sa - 1).astype(flex_type_enum::STRING) + b;
  // results in ret being the array ["1!", "3!", "5!", "7!", "9!"];
  \endcode
- 
+
  <b>Comparison operators</b> will return a gl_sarray of binary integers.
  \code
  gl_sarray a{1,2,3,4,5};
- auto ret = a > 3; 
+ auto ret = a > 3;
  // ret will be an integer array containing [0,0,0,1,1]
  \endcode
- 
+
  Logical and bitwise operators are equivalent: & and && mean the same thing
  and | and || and provide logical element-wise "and" and "or"s.
- 
+
  \code
  gl_sarray a{1,2,3,4,5};
- auto ret = a > 1 && a <= 4; 
+ auto ret = a > 1 && a <= 4;
  // ret will be an integer array containing [0,1,1,1,0]
  \endcode
- 
+
  These are useful for the <b>logical filter</b> operation:
  \code
  gl_sarray a{1,2,3,4,5};
  gl_sarray b = a.astype(flex_type_enum::STRING);
- auto ret = b[a > 1 && a <= 4]; 
+ auto ret = b[a > 1 && a <= 4];
  // ret will be an string array containing ["2","3","4"]
  \endcode
- 
- The logical and bitwise operators can be used with non-integral arrays 
+
+ The logical and bitwise operators can be used with non-integral arrays
  in which case all empty values evaluate to False. i.e. for string,
  list, and dictionary SArrays, empty values are interpreted as false.
- 
+
  For instance:
  \code
  gl_sarray a{"1","","2"}; // sarray of strings
@@ -163,20 +161,20 @@ namespace graphlab {
  SArray supports range slicing:
  \code
  gl_sarray s{1,2,3,4,5};
- gl_sarray t = s[{0,3}]; 
- gl_sarray u = s[{-3,-1}]; 
- 
+ gl_sarray t = s[{0,3}];
+ gl_sarray u = s[{-3,-1}];
+
  // t is [1,2]
  // u is [3,4]
  \endcode
- 
+
  It can be read \b inefficiently using gl_sarray::operator[]
  \code
  gl_sarray s{1,2,3,4,5};
- int val = s[2]; 
+ int val = s[2];
  // val == 3
  \endcode
- 
+
  Or iterated \b efficiently using the \ref gl_sarray::range_iterator
  \code
  for (const auto& i: sa.range_iterator()) {
@@ -209,9 +207,9 @@ namespace graphlab {
 
   BEGIN_FUNCTION_REGISTRATION
   REGISTER_FUNCTION(logx, "data", "base")
-  END_FUNCTION_REGISTRATION 
+  END_FUNCTION_REGISTRATION
  \endcode
- 
+
  \section sec_sframe_intro SFrame
 
  SFrame (\ref gl_sframe) is a tabular,
@@ -223,14 +221,14 @@ namespace graphlab {
  ease.
 
  A \ref gl_sframe essentially acts as an ordered dictionary of \ref
- gl_sarray objects.  
+ gl_sarray objects.
 
- \subsection sec_sframe_usage Using SFrame 
+ \subsection sec_sframe_usage Using SFrame
 
  The gl_sframe API is designed to very closely mimic the Python SFrame API
- and supports much of the Python-like capabilities, but in C++. 
+ and supports much of the Python-like capabilities, but in C++.
 
- <b>Column Creation And Referencing</b> 
+ <b>Column Creation And Referencing</b>
  \code
  gl_sframe sf;
  sf["a"] = {1,2,3,4,5}
@@ -238,7 +236,7 @@ namespace graphlab {
  sf["c"] = sf["a"] / sf["b"] + some_other_sarray;
  \endcode
 
- <b>Multi-Column Indexing</b> 
+ <b>Multi-Column Indexing</b>
  \code
  gl_sframe sf{ {"a", {1,2,3,4,5} },
                {"b", {"1","2","3","4","5"} },
@@ -250,7 +248,7 @@ namespace graphlab {
  <b>Logical Filter</b>
  \code
  gl_sframe sf{{"a", {1,2,3,4,5}},
-              {"b", {"1","2","3","4","5"}}}; 
+              {"b", {"1","2","3","4","5"}}};
  gl_sframe t = sf[sf["a"] < 3]
  // t now has 2 columns. a: [1,2] b:["1","2"]
  \endcode
@@ -258,7 +256,7 @@ namespace graphlab {
  <b>Python Range Slicing</b>
  \code
  gl_sframe sf{{"a", {1,2,3,4,5}},
-              {"b", {"1","2","3","4","5"}}}; 
+              {"b", {"1","2","3","4","5"}}};
  t = sf[{0,3}];
  // t is the first 3 rows of sf
  \endcode
@@ -284,7 +282,7 @@ namespace graphlab {
  | 4  |  cow  |  moo  |
  +----+-------+-------+
  [3 rows x 3 columns]
- 
+
  +----+-------+-------+
  | id |  name | sound |
  +----+-------+-------+
@@ -294,7 +292,7 @@ namespace graphlab {
  | 2  |  cat  |  None |
  +----+-------+-------+
  [4 rows x 3 columns]
- 
+
  +----+-------+-------+
  | id |  name | sound |
  +----+-------+-------+
@@ -304,7 +302,7 @@ namespace graphlab {
  | 5  |  None |  oink |
  +----+-------+-------+
  [4 rows x 3 columns]
- 
+
  +----+-------+-------+
  | id |  name | sound |
  +----+-------+-------+
@@ -335,30 +333,30 @@ namespace graphlab {
  The \ref gl_sframe can be read \b inefficiently using gl_sframe::operator[]
  \code
  gl_sframe sf{{"a", {1,2,3,4,5}},
-              {"b", {"1","2","3","4","5"}}}; 
- std::vector<flexible_type> val = s[2]; 
+              {"b", {"1","2","3","4","5"}}};
+ std::vector<flexible_type> val = sf[2];
  // val[0] == 3, val[1] == "3"
  \endcode
 
  Or iterated \b efficiently using the \ref gl_sframe::range_iterator
  \code
- for (const std::vector<flexible_type>& row: sa.range_iterator() {
-   ... 
+ for (const std::vector<flexible_type>& row: sa.range_iterator()) {
+   ...
  }
  \endcode
 
- \subsection sec_sframe_construction Constructing SFrame 
+ \subsection sec_sframe_construction Constructing SFrame
 
- The gl_sframe can constructed in a variety of ways: 
+ The gl_sframe can constructed in a variety of ways:
    - If the data to be written is already in memory, it can be created
-     using the 
-     \ref gl_sframe::gl_sframe(const std::map<std::string, std::vector<flexible_type> >& data) 
+     using the
+     \ref gl_sframe::gl_sframe(const std::map<std::string, std::vector<flexible_type> >& data)
      "gl_sframe constructor"
    - If the columns are already in \ref gl_sarray,
      it can be created using the other
      \ref gl_sframe::gl_sframe(std::initializer_list<std::pair<std::string, gl_sarray>>  data)
      "gl_sframe constructor"
-   - Otherwise, the \ref gl_sframe_writer can be used which provides a simple 
+   - Otherwise, the \ref gl_sframe_writer can be used which provides a simple
      write interface.
 
   \subsection sec_sframe_writer  SFrame Writer Interface
@@ -370,13 +368,13 @@ namespace graphlab {
 
   \code
   // Writes an SFrame of 4 segments, and 2 columns "a" and "b", both of which
-  // are integers.  
-  gl_sframe_writer writer({"a","b"}, 
-                          {flex_type_enum:INTEGER, flex_type_enum::INTEGER}, 
+  // are integers.
+  gl_sframe_writer writer({"a","b"},
+                          {flex_type_enum:INTEGER, flex_type_enum::INTEGER},
                           4);
 
   // for each segment, write a bunch of (i, i) pair values.
-  // segment 0 has 10 0's, 
+  // segment 0 has 10 0's,
   // segment 1 has 10 1's,
   // etc
   for (size_t seg = 0;seg < 4; ++seg) {
@@ -386,18 +384,18 @@ namespace graphlab {
   }
 
   gl_sframe sa = writer.close();
-  // sa is now an SFrame of 40 elements comprising of 
+  // sa is now an SFrame of 40 elements comprising of
   // four consecutive sequences of (1,1) to (10,10)
   \endcode
 
   \note Different segments can be written safely in parallel.
 
-  \note It is not safe to write to the same segment simultanously. 
+  \note It is not safe to write to the same segment simultanously.
 
  \subsection sec_sframe_apply Apply User Defined Function
 
  You can use \ref gl_sframe::apply
- to perform a "map" operation which takes each row of the sframe 
+ to perform a "map" operation which takes each row of the sframe
  and returns a value of \ref flexible_type. The return object
  is a \ref gl_sarray whose size equals to number of rows of the \ref gl_sframe.
 
@@ -418,8 +416,8 @@ namespace graphlab {
 
  std::cout << sf_row_normalized << std::endl;
  \endcode
- 
- Produces output: 
+
+ Produces output:
  \code{.txt}
  dtype: float
  Rows: 5
@@ -432,8 +430,8 @@ namespace graphlab {
  \ref gl_sframe -> \ref gl_sframe,
  you can store the return value into a \ref flexible_type
  of type \ref flex_type_enum::LIST and use \ref gl_sarray::unpack
- to convert the resultant SArray into SFrame. 
- 
+ to convert the resultant SArray into SFrame.
+
  \subsection sec_sframe_groupby_aggregate Groupby Aggregate
 
  Groupby aggregate is one of the most powerful operations for transforming
@@ -444,7 +442,7 @@ namespace graphlab {
 
  For instance, we can get the mean and standard deviation of rating for each user:
  \code
- sf2 = sf.groupby({"user"}, 
+ sf2 = sf.groupby({"user"},
                   { {"mean_rating", aggregate::MEAN("rating")},
                     {"stdv_rating", aggregate::STDV("rating")} });
  // The result sf2 has three columns: user, mean_rating and stdv_rating
@@ -452,22 +450,22 @@ namespace graphlab {
 
  To extract the median:
  \code
- sf2 = sf.groupby( {"user"}, 
+ sf2 = sf.groupby( {"user"},
                    { {"rating_quantiles", aggregate::QUANTILE("rating", 0.5)} });
  // The result sf2 has two columns: user, rating_quantiles
  \endcode
- 
+
  To extract a few quantiles:
  \code
- sf2 = sf.groupby({"user"}, 
+ sf2 = sf.groupby({"user"},
                   { {"rating_quantiles", aggregate::QUANTILE("rating", {0.25,0.5,0.75})} });
- // The result sf2 has two columns: user, rating_quantiles 
- // The rating_quantile has type vector wand length 3 
+ // The result sf2 has two columns: user, rating_quantiles
+ // The rating_quantile has type vector wand length 3
  \endcode
- 
+
  Or equivalently
  \code
- sf2 = sf.groupby({"user"}, 
+ sf2 = sf.groupby({"user"},
                   { {"rating_quantiles", aggregate::QUANTILE("rating", {0.25,0.5,0.75})} });
  \endcode
 
@@ -480,7 +478,7 @@ namespace graphlab {
  \subsubsection sec_sframe_customized_groupby User Defined Groupby Aggregator
 
  In addition to the builtin aggregators, you can easily define your own
- aggregators. To implement a new aggregator, start with a class which 
+ aggregators. To implement a new aggregator, start with a class which
  inherits from the base \ref group_aggregate_value. The new aggregator class
  needs to implement the following pure virtual functions in the base class:
      - Factory \ref group_aggregate_value::new_instance
@@ -527,7 +525,7 @@ class geometric_mean: public group_aggregate_value {
 
   flex_type_enum set_input_types(flex_type_enum type) {
     // set nothing here because it's not needed
-    return flex_type_enum::FLOAT; 
+    return flex_type_enum::FLOAT;
   }
 
   void save(oarchive& oarc) const {
@@ -547,7 +545,7 @@ class geometric_mean: public group_aggregate_value {
  To apply the new aggregator we use the \ref aggregate::make_aggregator function.
  \code
  gl_sframe test_sframe { {"key", {"a","a","a","b","b","b"}},
-                         {"value", {1,1,1,2,2,2}} }; 
+                         {"value", {1,1,1,2,2,2}} };
  gl_sframe result_sframe = test_sframe.groupby( {"a"}, aggregate::make_aggregator<geometric_mean>({"b"}) );
 
  // result_sframe will have two columns: "key" = ["a", "b"], and "value" = "1, 2";
@@ -555,7 +553,7 @@ class geometric_mean: public group_aggregate_value {
 
  Note that the new aggregator class cannot be directly published to python as
  a <code> graphlab.aggregate.GEOMETRIC_MEAN </code> and used by
- <code> graphlab.SFrame.groupby </code>. But we can wrap it into an extension function 
+ <code> graphlab.SFrame.groupby </code>. But we can wrap it into an extension function
  which we know how to publish.
 \code
 #include <graphlab/sdk/toolkit_function_macros.hpp>
@@ -564,7 +562,7 @@ class geometric_mean: public group_aggregate_value {
 gl_sframe groupby_geometric_mean(const gl_sframe& sf,
                                  const std::string& key_column,
                                  const std::string& value_column) {
-  gl_sframe result_sframe = sf.groupby( {key}, 
+  gl_sframe result_sframe = sf.groupby( {key},
       {{"output", aggregate::make_aggregator<geometric_mean>({value_column})}} );
   return result_sframe;
 }
@@ -573,7 +571,7 @@ REGISTER_FUNCTION(groupby_geometric_mean, "data", "key_column", "value_column")
 END_FUNCTION_REGISTRATION
 \endcode
 
- The \ref group_aggregate_value interface is flexible to implement complicated 
+ The \ref group_aggregate_value interface is flexible to implement complicated
  aggregators. For example, the aggregator can take multiple input columns,
  carry interesting states. For more details, please see the API doc of
  \ref group_aggregate_value.
@@ -582,9 +580,9 @@ END_FUNCTION_REGISTRATION
 
  It is easier to show how <b>stack</b> and <b>unstack</b> work by example.
 
- Intuitively, \ref gl_sframe::stack converts a "wide" \ref gl_sframe to 
+ Intuitively, \ref gl_sframe::stack converts a "wide" \ref gl_sframe to
  a "tall" \ref gl_sframe.
- 
+
  Suppose 'sf' is an SFrame that contains a user and his/her friends,
  where 'friends' columns is an array type. Stack on 'friends' column
  would create a user/friend list for each user/friend pair:
@@ -595,8 +593,8 @@ END_FUNCTION_REGISTRATION
  std::cout <<  sf << std::endl;
  std::cout <<  sf.stack("friends", "friend") << std::endl;
  \endcode
- 
- Produces output: 
+
+ Produces output:
  \code{.txt}
  +------+------------------+
  | user |     friends      |
@@ -606,7 +604,7 @@ END_FUNCTION_REGISTRATION
  |  3   | [4, 5, 10, None] |
  +------+------------------+
  [3 rows x 2 columns]
- 
+
  +------+--------+
  | user | friend |
  +------+--------+
@@ -622,18 +620,18 @@ END_FUNCTION_REGISTRATION
  +------+--------+
  [9 rows x 2 columns]
  \endcode
-  
+
  \ref gl_sframe::unstack is the inverse operation of \ref gl_sframe::stack.
  It converts a "tall" \ref gl_sframe to a "wide" \ref gl_sframe.
 
- For instance: 
+ For instance:
  \code
  auto  sf = gl_sframe({{"friend", {2, 3, 4, 5, 6, 4, 5, 2, 3}},
                        {"user", {1, 1, 1, 2, 2, 2, 3, 4, 4}}});
  std::cout <<  sf.unstack("friend", "friends") << std::endl;
  \endcode
- 
- Produces output: 
+
+ Produces output:
  \code{.txt}
  +------+-----------------------------+
  | user |           friends           |
@@ -656,7 +654,7 @@ END_FUNCTION_REGISTRATION
  \code
  //
  // Compiled as example.so
- // 
+ //
  gl_sframe add_ones_column(const gl_sframe& data) {
    gl_sframe sf = data;
    sf["ones"] = 1;

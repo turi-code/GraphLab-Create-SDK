@@ -2,8 +2,6 @@ namespace graphlab {
 /**
 \page page_userguide_sgraph SGraph User Guide
 
-\tableofcontents
-
 SGraph (\ref gl_sgraph in the sdk) is a scalable graph data
 structure backed by persistent storage SFrame (\ref gl_sframe).
 
@@ -17,7 +15,7 @@ billions of edges and hundreds of millions of vertices.
   4. apply user defined computation on the graph.
 
 In this tutorial, we first walk you through each of the bullet points above.
-Next, we emphasize several important technical details that 
+Next, we emphasize several important technical details that
 makes SGraph efficient.
 Finally, we point you to the \b sdk_example/ for concrete examples.
 
@@ -85,9 +83,9 @@ the \ref gl_sgraph::vertices and \ref gl_sgraph::edges methods.
 
 Both functions return a GFrame (\ref gl_gframe) object -- an SFrame like object
 but \b bound to its parent SGraph. This means the modification to GFrame is applied
-to SGraph, and vice versa. 
+to SGraph, and vice versa.
 
-For instance, the following code shows how to add/remove columns 
+For instance, the following code shows how to add/remove columns
 to/from the vertex data. The change is applied to SGraph.
 \code
 // add a new edge attribute with const value.
@@ -142,7 +140,7 @@ You can perform non-mutating \ref gl_sframe operations like
 groupby, join, logical_filter with \ref gl_gframe in the same way,
 and the returned object will always be \ref gl_sframe.
 
-However, when you want to modify fields of the SGraph, make sure to use \ref gl_gframe. 
+However, when you want to modify fields of the SGraph, make sure to use \ref gl_gframe.
 For instance,
 \code
     // This will assign all vertex vertex with field "foo" equal to bar.
@@ -153,19 +151,19 @@ For instance,
 \endcode
 
 \note
-\ref gl_gframe is implemented as a subclass of \ref gl_sframe, with 
+\ref gl_gframe is implemented as a subclass of \ref gl_sframe, with
 overloaded functions like: \ref gl_sframe::add_columns,
-\ref gl_sframe::remove_column, etc. 
-It holds a pointer to the parent \ref gl_sgraph, and implements the 
+\ref gl_sframe::remove_column, etc.
+It holds a pointer to the parent \ref gl_sgraph, and implements the
 overloading using corresponding \ref gl_sgraph operations.
 
-\section sec_sgraph_computation User Defined Graph Computation 
+\section sec_sgraph_computation User Defined Graph Computation
 
 In the case where you want to perform vertex-specified operations,
 such as "gather"/"scatter" over the neighborhood of each vertex,
 we provide \ref gl_sgraph::triple_apply which is essentially a
 "parallel for" over (Vertex, Edge, Vertex) triplets, as shown in the following
-pseudo code: 
+pseudo code:
 \code
 INPUT: G: gl_sgraph, lambda: (V, E, V)->void
 OUTPUT: G': gl_sgraph
@@ -184,7 +182,7 @@ END PARALLEL FOR
 RETURN G'
 \endcode
 
-For instance, the following code shows how to implement the update function 
+For instance, the following code shows how to implement the update function
 for synchronous pagerank.
 
 \code
@@ -235,7 +233,7 @@ END_FUNCTION_REGISTRATION
 
  \section sec_sgraph_python_binding Python Binding
 
- When used as an input argument in an SDK function, it permits a Python SGraph 
+ When used as an input argument in an SDK function, it permits a Python SGraph
  to be passed as an argument. When used in an output argument, it will return
  a Python SGraph.
 
@@ -246,7 +244,7 @@ END_FUNCTION_REGISTRATION
 
  #include <graphlab/sdk/toolkit_function_macros.hpp>
  #include <graphlab/sdk/gl_sgraph.hpp>
- 
+
  using namespace graphlab;
 
  gl_sframe count_out_degree(const gl_sgraph& g) {

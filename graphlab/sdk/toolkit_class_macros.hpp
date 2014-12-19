@@ -173,12 +173,12 @@
 //  *  }
 //  *  \endcode
 //  */
-// #define REGISTER_OVERLOADED_CLASS_MEMBER_FUNCTION(overload_type, function, ...) \
-//   register_function(#function,  \
-//                     std::vector<std::string>{__VA_ARGS__}, \
-//                     toolkit_class_wrapper_impl::generate_member_function_wrapper_indirect( \
-//                     static_cast<overload_type>(&function), ##__VA_ARGS__));
-//
+/* #define REGISTER_OVERLOADED_CLASS_MEMBER_FUNCTION(overload_type, function, ...) \
+ *   register_function(#function,  \
+ *                     std::vector<std::string>{__VA_ARGS__}, \
+ *                     toolkit_class_wrapper_impl::generate_member_function_wrapper_indirect( \
+ *                     static_cast<overload_type>(&function), ##__VA_ARGS__));
+ */
 // /*
 //  * Like REGISTER_CLASS_MEMBER_FUNCTION but to be used when the function to
 //  * be exposed is overloaded, AND the python facing function is to be redefined.
@@ -213,11 +213,12 @@
 //  *  }
 //  *  \endcode
 //  */
-// #define REGISTER_OVERLOADED_NAMED_CLASS_MEMBER_FUNCTION(name, overload_type, function, ...) \
-//   register_function(name,  \
-//                     std::vector<std::string>{__VA_ARGS__}, \
-//                     toolkit_class_wrapper_impl::generate_member_function_wrapper_indirect( \
-//                     static_cast<overload_type>(&function), ##__VA_ARGS__));
+/* #define REGISTER_OVERLOADED_NAMED_CLASS_MEMBER_FUNCTION(name, overload_type, function, ...) \
+ *   register_function(name,  \
+ *                     std::vector<std::string>{__VA_ARGS__}, \
+ *                     toolkit_class_wrapper_impl::generate_member_function_wrapper_indirect( \
+ *                     static_cast<overload_type>(&function), ##__VA_ARGS__));
+ */
 
 /// \internal
 namespace docstring_macro_impl {
