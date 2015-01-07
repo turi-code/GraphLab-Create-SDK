@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 GraphLab Inc.
+ * Copyright (C) 2015 Dato, Inc.
  * All rights reserved.
  *
  * This software may be modified and distributed under the terms
