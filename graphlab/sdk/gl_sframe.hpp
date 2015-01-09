@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 GraphLab Inc.
+ * Copyright (C) 2015 Dato, Inc.
  * All rights reserved.
  *
  * This software may be modified and distributed under the terms
@@ -358,7 +358,7 @@ groupby_descriptor_type ARGMIN(const std::string& agg, const std::string& out);
  * \ingroup group_glsdk
  * A tabular, column-mutable dataframe object that can scale to big data. 
  *
- * The data in \ref gl_sframe is stored column-wise on the GraphLab Server
+ * The data in \ref gl_sframe is stored column-wise on the GraphLab Create Server
  * side, and is stored on persistent storage (e.g. disk) to avoid being
  * constrained by memory size.  Each column in an \ref gl_sframe is a
  * immutable \ref gl_sarray, but \ref gl_sframe objects

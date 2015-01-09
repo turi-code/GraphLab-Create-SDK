@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2014 GraphLab Inc.
+ * Copyright (C) 2015 Dato, Inc.
  * All rights reserved.
  *
  * This software may be modified and distributed under the terms
@@ -298,7 +298,7 @@ class unity_global: public unity_global_base {
 
 
   /**
-   * Given a url, returns the type of the GraphLab object, return value could be:
+   * Given a url, returns the type of the GraphLab Create object, return value could be:
    * model, graph, sframe, sarray
    */
   std::string get_graphlab_object_type(const std::string& url);

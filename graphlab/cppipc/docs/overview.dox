@@ -135,7 +135,7 @@ consecutive parenthesis blocks.
 function definition
 - There must be no variable names in the arguments.
 
-The calls are serialized using GraphLab's serialization interface. i.e. all
+The calls are serialized using GraphLab Create's serialization interface. i.e. all
 arguments and return types must be serializable. See \ref serialization for
 details.
 

@@ -3,12 +3,12 @@ namespace graphlab {
 
 \page page_graphlab_extension_interface GraphLab Create Extension Interface
 
-The GraphLab Extension Interface was initially developed as a way to increase
-productivity of internal toolkit development with the objective of minimizing
-the friction required to expose functions and classes to Python, without
-requiring a ton of overhead.
+The GraphLab Create Extension Interface was initially developed as a way to 
+increase productivity of internal toolkit development with the objective of 
+minimizing the friction required to expose functions and classes to Python, 
+without requiring a ton of overhead.
 
-We will describe the GraphLab Extension Interface in two parts: for
+We will describe the GraphLab Create Extension Interface in two parts: for
 \ref sec_function_extension_interface "function extensions",
 and for \ref sec_class_extension_interface "class extensions".
 
@@ -40,9 +40,9 @@ import example
 print example.add_integers(5, 10)
 \endcode
 
-\subsection sec_function_graphlab_includes GraphLab Includes
+\subsection sec_function_graphlab_includes GraphLab Create Includes
 We begin with including \ref toolkit_function_macros.hpp
-This is the minimal include needed for implementing function extensions. All GraphLab objects
+This is the minimal include needed for implementing function extensions. All GraphLab Create objects
 and functions live in the <code>graphlab</code> namespace. We will use
 <code>using namespace graphlab;</code> here for convenience and succintness.
 
@@ -191,7 +191,7 @@ import graphlab
 GraphLab Create injects an import hook to capture all subsequent imports and
 automatically load what might be extensions.
 
-Therefore once GraphLab is imported, and a compiled extension (ex: example.so),
+Therefore once GraphLab Create is imported, and a compiled extension (ex: example.so),
 is in the current working directory (Or in the PYTHONPATH), the following import
 will work:
 \code{.py}
@@ -275,9 +275,9 @@ g.three = "world!"
 print g.concat() # prints "hello world!"
 \endcode
 
-\subsection sec_class_graphlab_includes GraphLab Includes
+\subsection sec_class_graphlab_includes GraphLab Create Includes
 We begin with including graphlab/sdk/toolkit_class_macros.hpp. This is the
-minimal include needed for implementing class extensions. All GraphLab objects
+minimal include needed for implementing class extensions. All GraphLab Create objects
 and functions live in the <code>graphlab</code> namespace. We will use
 <code>using namespace graphlab;</code> here for convenience and succintness.
 
@@ -573,7 +573,7 @@ will be used as placeholders.
 </td></tr>
 </table>
 
-<b> GraphLab Datastructures </b>
+<b> GraphLab Create Datastructures </b>
 <table>
 <tr><td>
   <b>C++ Type</b>

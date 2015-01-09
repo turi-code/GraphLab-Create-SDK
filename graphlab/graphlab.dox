@@ -1,7 +1,7 @@
 namespace graphlab {
 /**
 
-\defgroup group_gl_ffi GraphLab Extension Interface
+\defgroup group_gl_ffi GraphLab Create Extension Interface
 See \ref page_graphlab_extension_interface for the tutorial.
 
 \defgroup group_glsdk SDK
@@ -25,8 +25,8 @@ Create. The SDK provides:
 
 It also provides a way for certain SFrame / SGraph Python operators which take
 functions (like
-<a href="http://graphlab.com/products/create/docs/generated/graphlab.SArray.apply.html#graphlab.SArray.apply">SArray.apply</a>,
-or <a href="http://graphlab.com/products/create/docs/generated/graphlab.SGraph.triple_apply.html#graphlab.SGraph.triple_apply">SGraph.triple_apply</a>)
+<a href="https://dato.com/products/create/docs/generated/graphlab.SArray.apply.html#graphlab.SArray.apply">SArray.apply</a>,
+or <a href="https://dato.com/products/create/docs/generated/graphlab.SGraph.triple_apply.html#graphlab.SGraph.triple_apply">SGraph.triple_apply</a>)
 to use native functions instead of Python functions.
 
 \subsection mainpage_minimum_requirements Minimum Requirements
@@ -201,7 +201,7 @@ boost.
 \section mainpage_license License
 This SDK is provided under the 3-clause BSD license.
 
-Copyright (c) 2014, GraphLab Inc.
+Copyright (c) 2015, Dato, Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
