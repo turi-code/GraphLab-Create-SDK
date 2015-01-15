@@ -1,0 +1,330 @@
+namespace graphlab {
+/**
+
+\page how_to How To
+
+Here we provide a few SDK code snippets to help you get started with the SDK,
+illustrating a few interesting use cases. 
+
+\section sec_image_crop Center Cropping Images
+
+Sometimes, it is desirable to pre-process images in some defined way before using 
+them. For instance, our Deep Learning functionality requires fixed image sizes
+for training. GraphLab Create's resize function simply warps the image to the 
+pre-defined size, but it may be desireable to crop the image in some specific way.
+Here we show an example of how to this with the SDK. Note that this example 
+requires the opencv library to be installed on your system. 
+
+\code
+  // file image_crop.cpp
+  #include <graphlab/sdk/toolkit_function_macros.hpp>
+  #include <graphlab/flexible_type/flexible_type.hpp>
+  #include <cv.h>
+  #include <highgui.h>
+
+  using namespace graphlab;
+
+  flexible_type square_center_crop(flexible_type& in, int crop_size) {
+    flex_image src = in.get<flex_image>();
+   
+    // Translating number of channels into opencv image format
+    int image_format;
+    if (src.m_channels == 1) {
+      image_format = CV_8UC1;
+    } else if (src.m_channels == 3){
+      image_format = CV_8UC3;
+    } else if (src.m_channels == 4) {
+      image_format = CV_8UC4;
+    }
+
+    //Decode image
+    cv::Mat imgbuf(src.m_width,src.m_height, image_format, (unsigned char *)&src.m_image_data[0]);
+    cv::Mat img = imdecode(imgbuf, CV_LOAD_IMAGE_UNCHANGED);
+
+    //Define crop region
+    cv::Rect roi;
+    roi.x = (src.m_width - crop_size)/2;
+    roi.y = (src.m_height - crop_size)/2;
+    roi.width = crop_size;
+    roi.height = crop_size;
+
+    // Perform crop and image encoding
+    cv::Mat crop = img(roi); 
+    std::vector<unsigned char> buff; 
+    std::vector<int> params;
+    params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    params.push_back(3);
+    imencode(".png", crop, buff, params);
+   
+    // Writing out to destination image 
+    flex_image dst;
+    dst.m_height = crop_size;
+    dst.m_width = crop_size;
+    dst.m_channels = src.m_channels;
+    dst.m_image_data_size = buff.size();
+    dst.m_version = IMAGE_TYPE_CURRENT_VERSION;
+    dst.m_format = Format::PNG;
+    dst.m_image_data.reset(new char[dst.m_image_data_size]);
+    memcpy(&dst.m_image_data[0], &buff[0], dst.m_image_data_size); 
+
+    return flexible_type(dst);
+  }
+
+  BEGIN_FUNCTION_REGISTRATION
+  REGISTER_FUNCTION(center_crop, "src", "crop_size");
+  END_FUNCTION_REGISTRATION
+
+ \endcode  
+ 
+ Now, from the python side you can call:
+
+ \code
+  import graphlab
+  #import extension
+  import image_crop
+
+  img_sarray = graphlab.SArray('/your/path/here')
+  cropped_img_sarray = img_sarray.apply(lambda x : image_crop.square_center_crop(x, 50))
+ \endcode 
+ 
+\section sec_edge_deduplication SGraph Edge De-duplication
+
+\code
+/**
+ * Copyright (C) 2015 Dato, Inc.
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of the BSD license. See the LICENSE file for details.
+ */
+
+/**
+ * @author Jay Gu (jgu@dato.com)
+ *
+ * @date November 10, 2014
+ *
+ * @brief SGraph SDK Example
+ *
+ * This example produces the extension function: edge_deduplication
+ *
+ * To run this example, make a shared library and import into python.
+ *
+ * ### Compilation
+ * To compile, run
+ * \code
+ * cd graphlab-sdk
+ * make
+ * \endcode
+ *
+ * ### Usage
+ *
+ * In python or ipython, first import graphlab, then import the extension
+ * so file. Now you have access to the two extension functions in the
+ * sgraph_example module as regular python function.
+ *
+ * Example:
+ * \code{.py}
+ * import graphlab
+ * from sdk_example.sgraph_edge_deduplication import edge_deduplication
+ *
+ * # The higgs-twitter graph is from Stanford SNAP project. (http//snap.stanford.edu)
+ * url = 'http://snap.stanford.edu/data/higgs-reply_network.edgelist.gz'
+ * g = graphlab.load_sgraph(url, format='snap', delimiter=' ')
+ *
+ * # Manually duplicate some edges
+ * g2 = g.add_edges(g.edges.sample(0.1))
+ * print g2.summary()
+ * g3 = sgraph_example.edge_deduplication(g2)
+ * print g3.summary()
+ * \endcode
+ *
+ * Produces output
+ * \code{.txt}
+ *
+ * Summary of g2
+ * SGraph({'num_edges': 33316, 'num_vertices': 37366})
+ * Vertex Fields:['__id', 'pagerank']
+ * Edge Fields:['X3', '__dst_id', '__src_id']
+ *
+ * Summary of g3
+ * SGraph({'num_edges': 30836, 'num_vertices': 37366})
+ * Vertex Fields:['__id', 'pagerank']
+ * Edge Fields:['X3', '__dst_id', '__src_id']
+\endcode
+
+C++ extension:
+
+\code
+#include <string>
+#include <vector>
+#include <map>
+#include <graphlab/sdk/toolkit_function_macros.hpp>
+#include <graphlab/sdk/toolkit_class_macros.hpp>
+#include <graphlab/flexible_type/flexible_type.hpp>
+#include <graphlab/sdk/gl_sframe.hpp>
+#include <graphlab/sdk/gl_sgraph.hpp>
+
+using namespace graphlab;
+
+/**
+ * Return a new graph with no duplicate edges.
+ * 
+ * \param g The input graph
+ */
+gl_sgraph edge_deduplication(const gl_sgraph& g) {
+  std::vector<std::string> edge_fields = g.get_edge_fields();
+
+  std::map<std::string, aggregate::groupby_descriptor_type> groupby_operators;
+  for (const auto& f: edge_fields) {
+    if (f != "__src_id" && f != "__dst_id") {
+      groupby_operators[f] = aggregate::SELECT_ONE(f);
+    }
+  }
+  gl_sframe edge_dedup = g.get_edges().groupby( {"__src_id", "__dst_id"}, groupby_operators );
+  return gl_sgraph(g.get_vertices(), edge_dedup);
+}
+
+BEGIN_FUNCTION_REGISTRATION
+REGISTER_FUNCTION(edge_deduplication, "graph");
+END_FUNCTION_REGISTRATION
+\endcode
+
+\section sec_weighted_pagerank Weighted Pagerank 
+
+\code
+/**
+ * Copyright (C) 2015 Dato, Inc.
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of the BSD license. See the LICENSE file for details.
+ */
+
+/**
+ * @author Jay Gu (jgu@dato.com)
+ *
+ * @date November 10, 2014
+ *
+ * @brief SGraph SDK Example
+ *
+ * This example produces the extension function: weighted_pagerank
+ *
+ * To run this example, make a shared library and import into python.
+ *
+ * ### Compilation
+ * To compile, run
+ * \code
+ * cd graphlab-sdk
+ * make
+ * \endcode
+ *
+ * ### Usage
+ *
+ * In python or ipython, first import graphlab, then import the extension
+ * so file. Now you have access to the two extension functions in the
+ * sgraph_example module as regular python function.
+ *
+ * Example:
+ * \code{.py}
+ * import graphlab
+ * from sdk_example.sgraph_weighted_pagerank import weighted_pagerank
+ *
+ * # The higgs-twitter graph is from Stanford SNAP project. (http//snap.stanford.edu)
+ * url = 'http://snap.stanford.edu/data/higgs-reply_network.edgelist.gz'
+ * g = graphlab.load_sgraph(url, format='snap', delimiter=' ')
+ *
+ * g2 = weighted_pagerank(g, num_iterations=10, weight_field='X3')
+ * print g2.vertices.sort('pagerank', ascending=False)
+ *
+ * \endcode
+ *
+ * Produces output
+ * \code{.txt}
+ *
+ * Top 10 vertices with highest weighted pagrank in g
+ * +--------+---------------+
+ * |  __id  |    pagerank   |
+ * +--------+---------------+
+ * | 45848  | 326.808929483 |
+ * | 28423  | 138.143053733 |
+ * | 53134  | 67.5302627568 |
+ * | 56576  | 58.2142161056 |
+ * | 77095  | 49.0152734282 |
+ * | 421960 | 49.0152734282 |
+ * | 203739 | 49.0152734282 |
+ * | 344282 | 49.0152734282 |
+ * | 48053  | 49.0152734282 |
+ * | 56437  | 49.0152734282 |
+ * |  ...   |      ...      |
+ * +--------+---------------+
+\endcode
+
+C++ extension: 
+
+\code
+#include <string>
+#include <vector>
+#include <map>
+#include <graphlab/sdk/toolkit_function_macros.hpp>
+#include <graphlab/sdk/toolkit_class_macros.hpp>
+#include <graphlab/flexible_type/flexible_type.hpp>
+#include <graphlab/sdk/gl_sframe.hpp>
+#include <graphlab/sdk/gl_sgraph.hpp>
+
+using namespace graphlab;
+
+/**
+ * Compute weighted pagerank of the given graph.
+ *
+ * Return a new graph with "pagerank" field on each vertex.
+ *
+ * \param g The input graph
+ * \param iters Number of iterations
+ * \param weighted_field The edge field which contains the weight value.
+ */
+gl_sgraph weighted_pagerank(const gl_sgraph& g, size_t iters, const std::string& weight_field) {
+  const double RESET_PROB=0.15;
+
+  // Get rid of unused fields.
+  gl_sgraph g_min = g.select_fields({weight_field});
+
+  // Count the total out going weight of each vertex into an SFrame.
+  gl_sframe outgoing_weight = g_min.get_edges().groupby({"__src_id"}, {{"total_weight", aggregate::SUM(weight_field)}});
+
+  // Add the total_weight to the graph as vertex atrribute.
+  // We can update the vertex data by adding the same vertex.
+  gl_sgraph g2 = g_min.add_vertices(outgoing_weight, "__src_id");
+
+  // Lambda function for triple_apply
+  auto pr_update = [&weight_field](edge_triple& triple)->void {
+    double weight = triple.edge[weight_field];
+    triple.target["pagerank"] += triple.source["pagerank_prev"] * weight / triple.source["total_weight"];
+  };
+
+  // Initialize pagerank value
+  g2.vertices()["pagerank_prev"] = 1.0;
+
+  // Iteratively run triple_apply with the update function
+  for (size_t i = 0; i < iters; ++i) {
+
+    g2.vertices()["pagerank"] = 0.0;
+
+    logprogress_stream << "Iteration " << (i+1) << std::endl;
+    g2 = g2.triple_apply(pr_update, {"pagerank"});
+
+    g2.vertices()["pagerank"] = RESET_PROB + (1-RESET_PROB) * g2.vertices()["pagerank"];
+    g2.vertices()["pagerank_prev"] = g2.vertices()["pagerank"];
+  }
+
+  g2.vertices().remove_column("pagerank_prev");
+  g2.vertices().remove_column("total_weight");
+  return g2;
+}
+
+BEGIN_FUNCTION_REGISTRATION
+REGISTER_FUNCTION(weighted_pagerank, "graph", "num_iterations", "weight_field");
+END_FUNCTION_REGISTRATION
+\endcode
+
+*/
+}
