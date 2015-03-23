@@ -1,6 +1,6 @@
 #include <string>
 #include <vector>
-#include <queue> 
+#include <deque> 
 #include <graphlab/flexible_type/flexible_type.hpp>
 #include <graphlab/sdk/toolkit_function_macros.hpp>
 #include <graphlab/sdk/toolkit_class_macros.hpp>
@@ -218,37 +218,32 @@ gl_sarray window_aggregate(std::function<size_t()> fn,gl_sarray & sa,size_t wind
   if(window_size <= 0)
     return writer.close();
   
-  std::queue<flexible_type> * queue = new std::queue<flexible_type>();
+  std::deque<flexible_type> * mydeque = new std::deque<flexible_type>();
 
   for (const auto &elem: sa.range_iterator()) {
-    queue->push(elem);
+    mydeque->push_back(elem);
     agg->add_element(elem);
 
-    if(queue->size() == window_size) { 
+    if(mydeque->size() == window_size) { 
       flexible_type agg_value = agg->emit();
       writer.write(agg_value,0);
       if(agg->is_incremental()) {
-        flexible_type & oldest_value = queue->front();
+        flexible_type & oldest_value = mydeque->front();
         agg->remove_element(oldest_value);
-        queue->pop();
+        mydeque->pop_front();
       } else { 
-        queue->pop();
-        std::queue<flexible_type> * queue2 = new std::queue<flexible_type>();
+        mydeque->pop_front();
         agg->initiate();
-        while (!queue->empty()){ 
-          flexible_type & oldest_value = queue->front();          
-          queue2->push(oldest_value);
-          agg->add_element(oldest_value);
-          queue->pop();
+        std::deque<flexible_type>::iterator it = mydeque->begin();
+        while (it != mydeque->end()){ 
+          agg->add_element(*it++);
         }
-        delete queue;
-        queue = queue2;
       }
     }
 
   }
   delete agg;
-  delete queue;
+  delete mydeque;
   return writer.close();
 }
 
@@ -258,5 +253,5 @@ REGISTER_FUNCTION(COUNT_AGG);
 REGISTER_FUNCTION(MAX_AGG);
 REGISTER_FUNCTION(MIN_AGG);
 REGISTER_FUNCTION(AVG_AGG);
-REGISTER_FUNCTION(window_aggregate, "aggregate_fn","sarray","window_size");
+REGISTER_FUNCTION(window_aggregate,"aggregate_fn","sarray","window_size");
 END_FUNCTION_REGISTRATION
