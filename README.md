@@ -25,7 +25,7 @@ The sdk also depends on boost 1.55 or above (headers only). We've included a sub
 Download SDK
 -------------
 ```
-git clone https://github.com/graphlab-code/GraphLab-Create-SDK.git graphlab-sdk
+git clone https://github.com/dato-code/GraphLab-Create-SDK.git graphlab-sdk
 ```
 
 Build Examples
