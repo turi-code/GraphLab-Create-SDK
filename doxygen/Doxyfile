@@ -746,6 +746,7 @@ WARN_LOGFILE           = doxygen.log
 INPUT                  = ../graphlab/graphlab.dox \
                          ../graphlab/ffi.dox \
                          ../graphlab/sdk \
+                         ../graphlab/how_to.dox \
                          ../graphlab/flexible_type \
                          ../graphlab/image \
                          ../graphlab/random \
