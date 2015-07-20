@@ -103,7 +103,7 @@ class parallel_task_queue {
   // protects the exception queue, and the task counters
   mutex mut;
   conditional event_condition;  // to wake up the joining thread
-  std::queue<std::string> exception_queue;
+  std::queue<std::exception_ptr> exception_queue;
   size_t tasks_inserted = 0;
   size_t tasks_completed = 0;
   bool waiting_on_join = false; // true if a thread is waiting in join
@@ -209,6 +209,11 @@ class parallel_task_queue {
      * Returns a singleton instance of the thread pool
      */
     static thread_pool& get_instance();
+
+    /**
+     * Frees the singleton instance of the thread pool
+     */
+    static void release_instance();
 
     //! Destructor. Cleans up all threads
     ~thread_pool();

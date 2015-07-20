@@ -14,7 +14,8 @@
 #include <map>
 #include <fault/zmq/zmq_msg_vector.hpp>
 #include <typeinfo>
-
+#include <exceptions/error_types.hpp>
+#include <export.hpp>
 namespace cppipc {
 
 /**
@@ -22,7 +23,7 @@ namespace cppipc {
  * The contents of the message used to call a function from 
  * the client to the server.
  */
-struct call_message {
+struct EXPORT call_message {
   /// Default constructor
   call_message(): objectid(0), body(NULL), zmqbodyused(false) {}
   /** 
@@ -97,7 +98,7 @@ enum class reply_status:size_t {
  * \ingroup cppipc
  * The contents of the message when replying from the server to the client.
  */
-struct reply_message {
+struct EXPORT reply_message {
   /// Default constructor
   reply_message(): body(NULL), bodylen(0),zmqbodyused(false) {}
   /** 
@@ -220,35 +221,6 @@ class ipcexception : public std::exception {
       strm.flush();
       errstring = strm.str();
     }
-};
-
-
-/**
- * Subclass the std::bad_alloc with custom message.
- */
-class bad_alloc : public std::bad_alloc {
-
-  std::string msg;
-
-  public:
-    bad_alloc(const std::string& msg) : msg(msg) {}
-    virtual const char* what() const throw() {
-      return msg.c_str();
-    }
-};
-
-/**
- * Subclass the std::bad_cast with custom message.
- */
-class bad_cast : public std::bad_cast {
-
-  std::string msg;
-
-  public:
-  bad_cast(const std::string& msg) : msg(msg) {}
-  virtual const char* what() const throw() {
-    return msg.c_str();
-  }
 };
 
 } // cppipc

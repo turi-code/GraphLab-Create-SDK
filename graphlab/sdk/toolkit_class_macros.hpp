@@ -385,7 +385,7 @@ namespace docstring_macro_impl {
  *
  */
 #define BEGIN_CLASS_REGISTRATION \
-   std::vector<::graphlab::toolkit_class_specification> get_toolkit_class_registration() { \
+   __attribute__((visibility("default"))) std::vector<::graphlab::toolkit_class_specification> get_toolkit_class_registration() { \
      std::vector<::graphlab::toolkit_class_specification> specs;
 
 

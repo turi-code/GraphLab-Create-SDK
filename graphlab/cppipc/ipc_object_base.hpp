@@ -9,12 +9,13 @@
 #ifndef CPPIPC_IPC_OBJECT_BASE_HPP
 #define CPPIPC_IPC_OBJECT_BASE_HPP
 #include <memory>
+#include <export.hpp>
 /**
  * All exported base classes must inherit from this class.
  */
 namespace cppipc {
 
-class ipc_object_base: public std::enable_shared_from_this<ipc_object_base> { };
+class EXPORT ipc_object_base: public std::enable_shared_from_this<ipc_object_base> { };
 
 } // cppipc
 

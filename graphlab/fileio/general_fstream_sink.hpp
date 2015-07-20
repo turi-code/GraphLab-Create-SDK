@@ -10,6 +10,7 @@
 #define FILEIO_GENERAL_FSTREAM_SINK_HPP
 #include <memory>
 #include <iostream>
+#include <fstream>
 #include <boost/iostreams/stream.hpp>
 #include <graphlab/fileio/union_fstream.hpp>
 #include <graphlab/fileio/fileio_constants.hpp>
@@ -31,10 +32,14 @@ class general_fstream_sink {
   std::shared_ptr<boost::iostreams::gzip_compressor> compressor;
 
   /// The underlying stream inside the in_file (std stream or hdfs stream)
-  std::ostream* underlying_stream = NULL;
+  std::shared_ptr<std::ostream> underlying_stream;
 
   /// Set by the constructor. whether it is gzip compressed.
   bool is_gzip_compressed = false;
+
+  /// Filename that was opened
+  std::string sanitized_filename;
+
  public:
   typedef char        char_type;
   struct category: public boost::iostreams::sink_tag, 

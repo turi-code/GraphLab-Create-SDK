@@ -32,7 +32,10 @@
 #ifndef GRAPHLAB_TIMER_HPP
 #define GRAPHLAB_TIMER_HPP
 
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
+
 #include <stdio.h>
 
 #include <iostream>
@@ -154,6 +157,19 @@ namespace graphlab {
      * approximate (but fast).
      */
     static size_t approx_time_millis();
+
+    /**
+     * \brief Stops the approximate timer.
+     *
+     * This stops the approximate timer thread. Once stoped, the approximate
+     * time will never be advanced again. This function should not generally
+     * be used, but it seems like on certain platforms (windows for instance)
+     * it does not like terminating threads inside DLLs at program terminiation.
+     * This can be used to force thread termination.
+     *
+     * \see approx_time_seconds approx_time_millis
+     */
+    static void stop_approx_timer();
 
     /**
      * Sleeps for sleeplen seconds

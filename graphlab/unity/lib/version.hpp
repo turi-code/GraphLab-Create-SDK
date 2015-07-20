@@ -15,5 +15,4 @@
 #else
 #define UNITY_VERSION "0.1.internal"
 #endif
-
 #endif

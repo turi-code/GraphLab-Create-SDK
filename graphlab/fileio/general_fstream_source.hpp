@@ -9,7 +9,7 @@
 #ifndef FILEIO_GENERAL_FSTREAM_SOURCE_HPP
 #define FILEIO_GENERAL_FSTREAM_SOURCE_HPP
 #include <memory>
-#include <iostream>
+#include <fstream>
 #include <boost/iostreams/stream.hpp>
 #include <graphlab/fileio/union_fstream.hpp>
 #include <graphlab/fileio/fileio_constants.hpp>
@@ -31,7 +31,7 @@ class general_fstream_source {
   std::shared_ptr<boost::iostreams::gzip_decompressor> decompressor;
 
   /// The underlying stream inside the in_file (std stream or hdfs stream)
-  std::istream* underlying_stream = NULL;
+  std::shared_ptr<std::istream> underlying_stream;
 
   /// Set by the constructor. whether it is gzip compressed.
   bool is_gzip_compressed = false;
@@ -73,10 +73,10 @@ class general_fstream_source {
 
 
   /**
-   * Default destructor. If all copies of this object is closed, 
+   * destructor. If all copies of this object is closed, 
    * closes the file.
    */
-  ~general_fstream_source() = default;
+  ~general_fstream_source();
 
   inline std::streamsize optimal_buffer_size() const {
     return graphlab::fileio::FILEIO_READER_BUFFER_SIZE;
@@ -117,6 +117,12 @@ class general_fstream_source {
    * Seeks to a different location. Will fail on compressed files.
    */
   std::streampos seek(std::streamoff off, std::ios_base::seekdir way);
+
+
+  /**
+   * Returns the underlying stream object if possible. nullptr otherwise.
+   */
+  std::shared_ptr<std::istream> get_underlying_stream() const;
 
  private:
   /**

@@ -15,6 +15,7 @@
 #include <functional>
 #include <graphlab/unity/lib/api/model_interface.hpp>
 #include <graphlab/unity/lib/toolkit_util.hpp>
+#include <export.hpp>
 namespace graphlab {
 /**
  * The base class for which all new toolkit classes inherit from.
@@ -52,7 +53,7 @@ namespace graphlab {
  * "__uid__" --> Returns a class specific string. This is used to bypass 
  *               type erasure to model_base.
  */
-class toolkit_class_base: public model_base {
+class EXPORT toolkit_class_base: public model_base {
  public:
   toolkit_class_base() { }
   virtual ~toolkit_class_base();

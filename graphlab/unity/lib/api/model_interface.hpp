@@ -15,7 +15,7 @@
 #include <map>
 #include <graphlab/unity/lib/variant.hpp>
 #include <graphlab/cppipc/magic_macros.hpp>
-
+#include <export.hpp>
 namespace graphlab {
 
 class model_proxy;
@@ -35,7 +35,7 @@ class model_proxy;
  *
  * \see simple_model
  */
-class model_base : public cppipc::ipc_object_base {
+class EXPORT model_base : public cppipc::ipc_object_base {
  public:
   typedef model_proxy proxy_object_type;
 

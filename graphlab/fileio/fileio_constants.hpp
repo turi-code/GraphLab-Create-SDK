@@ -9,8 +9,14 @@
 #ifndef GRAPHLAB_FILEIO_FILEIO_CONSTANTS_HPP
 #define GRAPHLAB_FILEIO_FILEIO_CONSTANTS_HPP
 #include <string>
+
 namespace graphlab {
 namespace fileio {
+
+/**
+ * Returns the system temporary directory
+ */
+std::string get_system_temp_directory();
 
 /**
  * The protocol prefix cache:// to identify a cached file.
@@ -27,6 +33,11 @@ extern const std::string TMP_CACHE_PREFIX;
  * colon seperated.
  */
 extern std::string CACHE_FILE_LOCATIONS;
+
+/**
+ * Additional HDFS location for storing large temp files.
+ */
+extern std::string CACHE_FILE_HDFS_LOCATION;
 
 /**
  * The initial memory capacity assigned to caches
@@ -54,6 +65,14 @@ extern size_t FILEIO_READER_BUFFER_SIZE;
  * The default fileio writer buffer size
  */
 extern size_t FILEIO_WRITER_BUFFER_SIZE;
+
+/**
+ * The alternative ssl certificate file and directory.
+ */
+extern std::string FILEIO_ALTERNATIVE_SSL_CERT_DIR;
+extern std::string FILEIO_ALTERNATIVE_SSL_CERT_FILE;
+
+
 }
 }
 #endif

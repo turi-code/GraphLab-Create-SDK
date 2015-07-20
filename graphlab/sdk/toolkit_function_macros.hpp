@@ -63,7 +63,7 @@
  *
  */
 #define BEGIN_FUNCTION_REGISTRATION                         \
-   std::vector<::graphlab::toolkit_function_specification> get_toolkit_function_registration() { \
+   __attribute__((visibility("default"))) std::vector<::graphlab::toolkit_function_specification> get_toolkit_function_registration() { \
      std::vector<::graphlab::toolkit_function_specification> specs;
 
 /**
@@ -107,7 +107,7 @@
  *  END_FUNCTION_REGISTRATION
  * \endcode
  * 
- * Both will be published as "demo_to_string"; the namespecing is ignored.
+ * Both will be published as "demo_to_string"; the namespacing is ignored.
  *
  * The return value of the function will be returned to Python. The function
  * can return void. If the function fails, it should throw an exception which 

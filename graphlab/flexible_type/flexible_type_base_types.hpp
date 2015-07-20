@@ -79,7 +79,7 @@ struct flex_date_time {
   }
 
   int64_t first : 56;
-  int8_t second : 8;
+  int64_t second : 8;
 
   /**
    * Returns the timestamp value.

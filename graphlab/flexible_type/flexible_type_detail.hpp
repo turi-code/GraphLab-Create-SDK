@@ -429,7 +429,7 @@ struct get_int_visitor {
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_int i) const {return i; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_date_time dt) const { return dt.first;}
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_float i) const {return i; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(const flex_string& t) const { return std::atol(t.c_str()); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(const flex_string& t) const { return std::atoll(t.c_str()); }
 };
 
 /**
@@ -690,10 +690,10 @@ struct city_hash128_visitor {
     return 0;
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(flex_date_time t) const {
-    return graphlab::hash128(long(get_int_visitor()(t)));
+    return graphlab::hash128((long long)(get_int_visitor()(t)));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(flex_int t) const {
-    return graphlab::hash128(long(t));
+    return graphlab::hash128((long long)(t));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(const flex_float& t) const {
     return graphlab::hash128(reinterpret_cast<const char*>(&t), sizeof(double));

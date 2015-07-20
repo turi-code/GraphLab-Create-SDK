@@ -44,8 +44,13 @@ struct issue_disect<ArgumentTuple, Arg, Args...> {
                    const Arg& a, const Args&... args) {
     static_assert(1 + sizeof...(Args) == std::tuple_size<ArgumentTuple>::value, "Argument Count Mismatch");
     typedef typename std::tuple_element<0, ArgumentTuple>::type  arg_type;
+
     typedef typename std::decay<arg_type>::type decayed_arg_type;
-    msg << (decayed_arg_type)(a);
+    if (std::is_same<decayed_arg_type, Arg>::value) {
+      msg << a;
+    } else {
+      msg << (decayed_arg_type)(a);
+    }
     typedef typename left_shift_tuple<ArgumentTuple>::type shifted_tuple;
     issue_disect<shifted_tuple, Args...>::exec(msg, args...);
   }

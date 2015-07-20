@@ -191,9 +191,9 @@ class dir_archive {
   static void delete_archive(std::string directory);
 
   /*
-   * Given a directory where one GraphLab Create object is stored, return the requested
+   * Given a directory where one GraphLab object is stored, return the requested
     metadata of the object.
-    Could throw if key does not exist or directory does not store a valid GraphLab Create
+    Could throw if key does not exist or directory does not store a valid GraphLab
     object
   */
   static std::string get_directory_metadata(

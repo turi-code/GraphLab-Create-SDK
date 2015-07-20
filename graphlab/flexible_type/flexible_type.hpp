@@ -256,7 +256,7 @@ class flexible_type {
    * Default Constructor.
    * By default constructs an integer of value 0.
    */
-  flexible_type();
+  flexible_type() noexcept;
 
   /**
    * Construct from initializer List. Makes a vector
@@ -272,18 +272,18 @@ class flexible_type {
   /*
    * Type constructor. Constructs a flexible type with a content type.
    */
-  explicit flexible_type(flex_type_enum start_type);
+  explicit flexible_type(flex_type_enum start_type) noexcept;
 
   /**
    * Copy constructor. Assigns this to a copy of other.
    */
-  flexible_type(const flexible_type& other);
+  flexible_type(const flexible_type& other) noexcept;
 
 
   /**
    * Copy constructor. Assigns this to a copy of other.
    */
-  flexible_type(flexible_type& other);
+  flexible_type(flexible_type& other) noexcept;
 
 
   /**
@@ -297,13 +297,13 @@ class flexible_type {
   /**
    * Move constructor. Just assigns myself to the other, destroying the other.
    */
-  flexible_type(flexible_type&& other);
+  flexible_type(flexible_type&& other) noexcept;
 
   /**
    * Move constructor. (Const overload. Required since the T&& universal
    * reference has a tendency to capture everything)
    */
-  flexible_type(const flexible_type&& other);
+  flexible_type(const flexible_type&& other) noexcept;
 
 
   /**
@@ -329,26 +329,26 @@ class flexible_type {
    * Assignment operator. Copies the other to myself.
    * See \ref flexible_type::operator=
    */
-  flexible_type& operator=(const flexible_type& other);
+  flexible_type& operator=(const flexible_type& other) noexcept;
 
   /**
    * Assignment operator. Copies the other to myself.
    * See \ref flexible_type::operator=
    */
-  flexible_type& operator=(flexible_type& other);
+  flexible_type& operator=(flexible_type& other) noexcept;
 
 
   /**
    * Move assignment. Assigns myself from the other, destroying the other.
    */
-  flexible_type& operator=(flexible_type&& other);
+  flexible_type& operator=(flexible_type&& other) noexcept;
 
 
   /**
    * Move assignment. (Const overload. Required since the T&& universal
    * reference has a tendency to capture everything).
    */
-  flexible_type& operator=(const flexible_type&& other);
+  flexible_type& operator=(const flexible_type&& other) noexcept;
 
 
   /**
@@ -1268,7 +1268,7 @@ class flexible_type {
     }
   }
 
-  static inline FLEX_ALWAYS_INLINE_FLATTEN void decref(union_type& v, flex_type_enum type) {
+  static inline FLEX_ALWAYS_INLINE_FLATTEN void decref(union_type& v, flex_type_enum type) noexcept {
     switch(type){
      case flex_type_enum::STRING:
        if (v.strval->first.dec() == 0) {
@@ -1306,7 +1306,7 @@ class flexible_type {
     }
   }
 
-  static inline FLEX_ALWAYS_INLINE_FLATTEN void incref(union_type& v, flex_type_enum type) {
+  static inline FLEX_ALWAYS_INLINE_FLATTEN void incref(union_type& v, flex_type_enum type) noexcept {
     switch(type){
      case flex_type_enum::STRING:
        v.strval->first.inc();
@@ -1368,7 +1368,7 @@ struct hash<graphlab::flexible_type> {
 
 namespace std {
 template<>
-inline void swap(graphlab::flexible_type& a, graphlab::flexible_type& b) {
+inline void swap(graphlab::flexible_type& a, graphlab::flexible_type& b) noexcept {
   a.swap(b);
 }
 }
@@ -1525,7 +1525,7 @@ inline FLEX_ALWAYS_INLINE const flex_image& flexible_type::get<flex_image>() con
 
 
 //constructors
-inline FLEX_ALWAYS_INLINE flexible_type::flexible_type(): stored_type(flex_type_enum::INTEGER) { val.intval = 0; }
+inline FLEX_ALWAYS_INLINE flexible_type::flexible_type() noexcept : stored_type(flex_type_enum::INTEGER) { val.intval = 0; }
 
 template <typename T>
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(std::initializer_list<T>&& list) :flexible_type() {
@@ -1538,16 +1538,16 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::~flexible_type() {
   reset();
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flex_type_enum start_type) :flexible_type() {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flex_type_enum start_type) noexcept:flexible_type() {
   reset(start_type);
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const flexible_type& other) :flexible_type() {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const flexible_type& other) noexcept:flexible_type() {
   (*this) = other;
 }
 
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flexible_type& other) :flexible_type() {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flexible_type& other) noexcept:flexible_type() {
   (*this) = other;
 }
 
@@ -1558,12 +1558,16 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const T& other, t
 }
 
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flexible_type&& other) : flexible_type() {
-  this->operator=(std::forward<flexible_type>(other));
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flexible_type&& other)  noexcept: flexible_type() {
+  val = other.val;
+  stored_type = other.get_type();
+  other.stored_type = flex_type_enum::INTEGER;
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const flexible_type&& other) : flexible_type() {
-  this->operator=(std::forward<const flexible_type>(other));
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const flexible_type&& other)  noexcept: flexible_type() {
+  val = other.val;
+  stored_type = other.get_type();
+  incref(val, stored_type);
 }
 
 template <typename T>
@@ -1579,7 +1583,7 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::soft_assign(cons
 }
 
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type& other) {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type& other)noexcept {
   if (&other == this) return *this;
   decref(val, stored_type);
   val = other.val;
@@ -1588,7 +1592,7 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const 
   return *this;
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type& other) {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type& other)noexcept {
   if (__builtin_expect(&other == this, 0)) return *this;
   decref(val, stored_type);
   val = other.val;
@@ -1597,7 +1601,7 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexib
   return *this;
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type&& other) {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type&& other)  noexcept{
   if (__builtin_expect(&other == this, 0)) return *this;
   decref(val, stored_type);
   val = other.val;
@@ -1607,7 +1611,7 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const 
 }
 
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type&& other) {
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type&& other)  noexcept{
   if (__builtin_expect(&other == this, 0)) return *this;
   decref(val, stored_type);
   val = other.val;

@@ -59,6 +59,7 @@
 #include <iostream>
 #include <iomanip>
 #include <graphlab/logger/assertions.hpp>
+#include <boost/exception/detail/is_output_streamable.hpp>
 
 // #include <serialization/serialize.hpp>
 // #include <serialization/set.hpp>
@@ -177,13 +178,17 @@ namespace graphlab {
 
   //! Writes a human representation of the set to the supplied stream.
   template <typename T>
-  std::ostream& operator<<(std::ostream& out, const std::set<T>& s) {
+  typename boost::enable_if_c<boost::is_output_streamable<T>::value, 
+           std::ostream&>::type 
+  operator<<(std::ostream& out, const std::set<T>& s) {
     return print_range(out, s, "{", ", ", "}");
   }
 
   //! Writes a human representation of the vector to the supplied stream.
   template <typename T>
-  std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
+  typename boost::enable_if_c<boost::is_output_streamable<T>::value, 
+           std::ostream&>::type 
+  operator<<(std::ostream& out, const std::vector<T>& v) {
     return print_range(out, v, "[", ", ", "]");
   }
 

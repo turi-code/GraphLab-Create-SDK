@@ -39,7 +39,7 @@
 #include <string>
 #include <graphlab/serialization/serializable_pod.hpp>
 #include <graphlab/logger/assertions.hpp>
-#include <stdint.h>
+#include <cstdint>
 
 namespace graphlab {
   class oarchive;

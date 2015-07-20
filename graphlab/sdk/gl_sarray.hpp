@@ -637,7 +637,7 @@ class gl_sarray {
    *
    * \see count_ngrams
    */
-  gl_sarray count_words(bool to_lower=true) const;
+  gl_sarray count_words(bool to_lower=true, graphlab::flex_list delimiters={"\r", "\v", "\n", "\f", "\t", " "}) const;
 
 
   /** 
@@ -1599,6 +1599,8 @@ class gl_sarray {
 
  private:
   void instantiate_new();
+
+  void ensure_has_sarray_reader() const;
 
   std::shared_ptr<unity_sarray> m_sarray;
 

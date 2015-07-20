@@ -111,9 +111,9 @@
     class base_name : public cppipc::ipc_object_base { \
      public: \
       typedef proxy_name proxy_object_type; \
-      virtual ~base_name() { } \
-      virtual void save(graphlab::oarchive& oarc) const {} \
-      virtual void load(graphlab::iarchive& iarc) {}       \
+      inline virtual ~base_name() { } \
+      inline virtual void save(graphlab::oarchive& oarc) const {} \
+      inline virtual void load(graphlab::iarchive& iarc) {}       \
        BOOST_PP_SEQ_FOR_EACH(__GENERATE_BASE__, _, __ADD_PARENS__(functions)) \
        REGISTRATION_BEGIN(base_name) \
        BOOST_PP_SEQ_FOR_EACH(__GENERATE_REGISTRATION__, base_name, __ADD_PARENS__(functions)) \

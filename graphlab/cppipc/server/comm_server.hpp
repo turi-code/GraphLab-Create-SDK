@@ -156,7 +156,7 @@ namespace detail {
  * as the new functions are not called.
  *
  */
-class comm_server {
+class EXPORT comm_server {
  private:
 
   friend class object_factory_impl;
@@ -316,6 +316,11 @@ class comm_server {
    * Gets the address on which you can subscribe to for status updates.
    */
   std::string get_status_address();
+
+  /**
+   * Gets the zeromq context.
+   */
+  void* get_zmq_context();
 
   /**
    * Publishes a message of the form "[status_type]: [message]". 

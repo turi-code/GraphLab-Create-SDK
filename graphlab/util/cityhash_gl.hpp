@@ -1,11 +1,3 @@
-/**
- * Copyright (C) 2015 Dato, Inc.
- * All rights reserved.
- *
- * This software may be modified and distributed under the terms
- * of the BSD license. See the LICENSE file for details.
- */
-
 #ifndef GRAPHLAB_CITYHASH_GL_H_
 #define GRAPHLAB_CITYHASH_GL_H_
 
@@ -96,11 +88,11 @@
 #endif
 
 // Local macros
-#ifdef _MSC_VER
+#if defined( _MSC_VER) || defined(_WIN32)
 
 #include <stdlib.h>
 #define bswap_32(x) _byteswap_ulong(x)
-#define bswap_64(x) _byteswap_uint64_t(x)
+#define bswap_64(x) _byteswap_uint64(x)
 
 #elif defined(__APPLE__)
 
@@ -703,7 +695,7 @@ static inline local_uint128 CityHashCrc128(const char *s, size_t len) {
 #undef _CH_PERMUTE3
 
 
-static inline uint64_t SimpleIntegerHash64(long s) {
+static inline uint64_t SimpleIntegerHash64(uint64_t s) {
 
   static const uint64_t m = 0xc6a4a7935bd1e995ULL; 
   static const int r = 47;

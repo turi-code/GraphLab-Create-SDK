@@ -1,4 +1,4 @@
-GraphLab Create 1.x SDK (BETA)
+GraphLab Create 1.5 SDK (BETA)
 ==============================
 
 The GraphLab Create SDK aims to provide 3rd party extensibility to GraphLab Create. The SDK provides:
@@ -12,7 +12,7 @@ Minimum Requirements
 --------------------
 *Linux*:
 
-- GraphLab Create >= 1.1 installation
+- GraphLab Create >= 1.5 installation
 - gcc 4.8 and above
 
 *Mac*:

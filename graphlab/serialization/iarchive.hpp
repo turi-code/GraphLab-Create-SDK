@@ -254,7 +254,7 @@ namespace graphlab {
        therefore call the .save function.  Here we pick between the archive
        types using serialize_hard_or_soft_fail
     */
-    template <typename InArcType, typename T, bool IsPOD>
+    template <typename InArcType, typename T, bool IsPOD, typename Enable = void>
     struct deserialize_impl {
       inline static void exec(InArcType& iarc, T& t) {
         deserialize_hard_or_soft_fail<InArcType, T>::exec(iarc, t);
