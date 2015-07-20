@@ -10,7 +10,6 @@
 #define GRAPHLAB_SFRAME_BUFFER_POOL_HPP
 #include <vector>
 #include <memory>
-#include <mutex>
 #include <stack>
 #include <graphlab/parallel/pthread_tools.hpp>
 
@@ -68,8 +67,11 @@ class buffer_pool {
    * Can be called in parallel
    */
   inline void release_buffer(std::shared_ptr<T>&& buffer) {
+    const size_t BUFFER_CAPACITY_LIMIT = 1024 * 1024;
     if (buffer) {
       buffer->clear();
+      if (buffer->capacity() >= BUFFER_CAPACITY_LIMIT)
+        buffer->shrink_to_fit();
       if (m_buffer_pool.size() + m_free_buffers.size() < m_buffer_size) {
         std::lock_guard<graphlab::mutex> guard(m_buffer_lock);
         m_free_buffers.push(std::move(buffer));

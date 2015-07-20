@@ -47,9 +47,11 @@ size_t get_server_object_id(Server* server, std::shared_ptr<T> objectptr) {
 
 
 template <typename OutArcType, typename T>
-struct serialize_impl<OutArcType, std::shared_ptr<T>, false> {
+struct serialize_impl<OutArcType, std::shared_ptr<T>, false,
+    typename std::enable_if<std::is_convertible<T*, cppipc::ipc_object_base*>::value>::type
+    > {
   inline static 
-      typename std::enable_if<std::is_convertible<T*, cppipc::ipc_object_base*>::value>::type
+      void
       exec(OutArcType& oarc, const std::shared_ptr<T> value) {
     // check that the object has been registered on the server size
     cppipc::comm_server* server;
@@ -66,10 +68,11 @@ struct serialize_impl<OutArcType, std::shared_ptr<T>, false> {
 
 
 template <typename InArcType, typename T>
-struct deserialize_impl<InArcType, std::shared_ptr<T>, false> {
+struct deserialize_impl<InArcType, std::shared_ptr<T>, false,
+    typename std::enable_if<std::is_convertible<T*, cppipc::ipc_object_base*>::value>::type
+    > {
   inline static 
-      typename std::enable_if<std::is_convertible<T*, cppipc::ipc_object_base*>::value>::type
-      exec(InArcType& iarc, std::shared_ptr<T>& value) {
+      void exec(InArcType& iarc, std::shared_ptr<T>& value) {
     cppipc::comm_server* server;
     cppipc::comm_client* client;
     cppipc::detail::get_deserialization_type(&server, &client);

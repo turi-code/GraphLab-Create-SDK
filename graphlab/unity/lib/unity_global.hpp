@@ -9,13 +9,16 @@
 #ifndef GRAPHLAB_UNITY_GLOBAL_HPP
 #define GRAPHLAB_UNITY_GLOBAL_HPP
 
-#include <graphlab/cppipc/cppipc.hpp>
 #include <graphlab/unity/lib/unity_base_types.hpp>
 #include <graphlab/unity/lib/toolkit_function_specification.hpp>
 #include <graphlab/unity/lib/toolkit_function_registry.hpp>
 #include <graphlab/unity/lib/toolkit_class_registry.hpp>
 #include <unity/lib/api/unity_global_interface.hpp>
 
+// forward declaration of comm_server
+namespace cppipc {
+class comm_server;
+}
 namespace graphlab {
 
 /**
@@ -257,12 +260,21 @@ class unity_global: public unity_global_base {
    * \code
    *   load_toolkit("example.so", "")
    * \endcode
-   * will load the toolkit function "example.square_root".
+   * will load the toolkit function into "example.square_root".
+   * (it will also appear in gl.extensions.example.square_root)
    *
    * \code
    *   load_toolkit("example.so", "pika")
    * \endcode
    * will load the toolkit function "pika.example.square_root".
+   * (it will also appear in gl.extensions.pika.example.square_root)
+   *
+   * module_subpath can also be ".."
+   * \code
+   *   load_toolkit("example.so", "..")
+   * \endcode
+   * In which case it will appear anywhere except in the top level of
+   * gl.extensions as gl.extensions.square_root.
    */
   std::string load_toolkit(std::string soname,
                            std::string module_subpath);
@@ -298,7 +310,7 @@ class unity_global: public unity_global_base {
 
 
   /**
-   * Given a url, returns the type of the GraphLab Create object, return value could be:
+   * Given a url, returns the type of the GraphLab object, return value could be:
    * model, graph, sframe, sarray
    */
   std::string get_graphlab_object_type(const std::string& url);

@@ -16,11 +16,12 @@
 #include <string>
 #include <vector>
 #include <graphlab/fileio/sanitize_url.hpp>
+
 namespace graphlab {
 namespace fileio {
 
 enum class file_status {
-  MISSING, REGULAR_FILE, DIRECTORY
+  MISSING, REGULAR_FILE, DIRECTORY, FS_UNAVAILABLE
 };
 
 /**
@@ -132,6 +133,12 @@ std::string get_filename(std::string path);
  */
 std::string get_dirname(std::string path);
 
+/**
+ * Converts the path to a generic format for operation.
+ *
+ * Currently, all this means is that backslashes are converted to forward slashes.
+ */
+std::string convert_to_generic(const std::string &path);
 
 /**
  * Given a root directory and an absolute path, tries to create a relative path
@@ -203,6 +210,12 @@ void copy(const std::string src, const std::string dest);
  * Changes the file mode bits of the given file or directory in the url
  */
 bool change_file_mode(const std::string path, short mode);
+
+/**
+ * Return canonical absolute path, eliminating dots, and symlinks
+ */
+std::string make_canonical_path(const std::string& path);
+
 } // namespace fileio
 } // namespace graphlab
 #endif

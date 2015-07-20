@@ -36,6 +36,11 @@ extern size_t SGRAPH_DEFAULT_NUM_PARTITIONS;
  * Buffer size for vertex deduplication during graph ingress
  */
 extern size_t SGRAPH_INGRESS_VID_BUFFER_SIZE;
+
+/**
+ * Number of threads used for hilber curve parallel for
+ */
+extern size_t SGRAPH_HILBERT_CURVE_PARALLEL_FOR_NUM_THREADS;
 }
 
 #endif

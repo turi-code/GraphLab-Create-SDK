@@ -105,7 +105,20 @@ static inline void unset_denormal_are_zero() {
 #define UNLIKELY(x) (__builtin_expect(!!(x), 0))
 
 
-
+/** A macro to make sure that a vector is sized sufficiently to hold
+ *  the index idx.  If not, resize.
+ *
+ *  One issue with using the standard vector resize is that
+ */
+#define FAST_CHECK_VECTOR_BUFFER_SIZE(v, idx)                           \
+  do {                                                                  \
+    if(UNLIKELY((v).size() <= (idx) )) {                                \
+      auto resize = [&]() GL_GCC_ONLY(GL_COLD_NOINLINE) {               \
+        (v).resize( (5*((idx) + 4)) / 4);                               \
+      };                                                                \
+      resize();                                                         \
+    }                                                                   \
+  } while(false)
 
 
 

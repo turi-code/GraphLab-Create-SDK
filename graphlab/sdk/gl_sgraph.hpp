@@ -966,6 +966,13 @@ class gl_sgraph {
    */
   void save(const std::string& directory) const;
 
+  /**
+   * Save the sgraph using reference to other SFrames.
+   *
+   * \see gl_sframe::save_reference
+   */
+  void save_reference(const std::string& directory) const;
+
   friend class gl_gframe;
 
  public:
@@ -1050,6 +1057,11 @@ class gl_sgraph {
    */
   void rename_edge_fields(const std::vector<std::string>& oldnames,
                           const std::vector<std::string>& newnames);
+
+  /**
+   * Retrieves a pointer to the underlying unity_sgraph
+   */
+  virtual std::shared_ptr<unity_sgraph> get_proxy() const;
 
  private:
   void instantiate_new();

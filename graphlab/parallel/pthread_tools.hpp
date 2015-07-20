@@ -34,7 +34,7 @@
 
 
 #include <cstdlib>
-#include <pthread.h>
+#include <graphlab/parallel/pthread_h.h>
 #include <semaphore.h>
 #include <sched.h>
 #include <signal.h>
@@ -46,21 +46,20 @@
 #include <boost/function.hpp>
 #include <graphlab/logger/assertions.hpp>
 #include <graphlab/parallel/atomic_ops.hpp>
-#include <graphlab/util/any.hpp>
 #include <graphlab/util/branch_hints.hpp>
 #include <boost/unordered_map.hpp>
 #undef _POSIX_SPIN_LOCKS
 #define _POSIX_SPIN_LOCKS -1
 
+#ifdef _WIN32
+typedef long suseconds_t;
+#endif
 
 #include <graphlab/parallel/mutex.hpp>
-
-
+#include <graphlab/util/any.hpp>
 
 
 namespace graphlab {
-
-
 
 
 
@@ -255,9 +254,52 @@ namespace graphlab {
     /// Waits on condition. The mutex must already be acquired. Caller
     /// must be careful about spurious wakes.
     inline void wait(const mutex& mut) const {
+#ifdef _WIN32
+      mut.locked = false;
       int error = pthread_cond_wait(&m_cond, &mut.m_mut);
+      mut.locked = true;
+#else
+      int error = pthread_cond_wait(&m_cond, &mut.m_mut);
+#endif
       ASSERT_TRUE(!error);
     }
+    /// Waits on condition. The mutex must already be acquired. Caller
+    /// must be careful about spurious wakes.
+    inline void wait(std::unique_lock<mutex>& mut) const {
+      // take over the pointer
+      auto lock_ptr = mut.mutex();
+      mut.release();
+
+      wait(*lock_ptr);
+      // put it back into the unique lock
+      std::unique_lock<mutex> retlock(*lock_ptr, std::adopt_lock);
+      mut.swap(retlock);
+    }
+    /// Waits on condition. The mutex must already be acquired. 
+    /// Returns only when predicate evaulates to true
+    template <typename Predicate>
+    inline void wait(const mutex& mut, Predicate pred) const {
+      while (!pred()) wait(mut);
+    }
+    /// Waits on condition. The mutex must already be acquired. 
+    /// Returns only when predicate evaulates to true
+    template <typename Predicate>
+    inline void wait(std::unique_lock<mutex>& mut, Predicate pred) const {
+      while (!pred()) wait(mut);
+    }
+
+    /// Wait till a timeout time
+    inline int timedwait(const mutex& mut, const struct timespec& timeout) const {
+#ifdef _WIN32
+      mut.locked = false;
+      int ret = pthread_cond_timedwait(&m_cond, &mut.m_mut, &timeout);
+      mut.locked = true;
+#else
+      int ret = pthread_cond_timedwait(&m_cond, &mut.m_mut, &timeout);
+#endif
+      return ret;
+    }
+
     /// Like wait() but with a time limit of "sec" seconds
     inline int timedwait(const mutex& mut, size_t sec) const {
       struct timespec timeout;
@@ -266,8 +308,9 @@ namespace graphlab {
       gettimeofday(&tv, &tz);
       timeout.tv_nsec = tv.tv_usec * 1000;
       timeout.tv_sec = tv.tv_sec + (time_t)sec;
-      return pthread_cond_timedwait(&m_cond, &mut.m_mut, &timeout);
+      return timedwait(mut, timeout);
     }
+
     /// Like wait() but with a time limit of "ms" milliseconds
     inline int timedwait_ms(const mutex& mut, size_t ms) const {
       struct timespec timeout;
@@ -289,7 +332,7 @@ namespace graphlab {
         timeout.tv_sec ++;
         timeout.tv_nsec -= 1000000000;
       }
-      return pthread_cond_timedwait(&m_cond, &mut.m_mut, &timeout);
+      return timedwait(mut, timeout);
     }
     /// Like wait() but with a time limit of "ns" nanoseconds
     inline int timedwait_ns(const mutex& mut, size_t ns) const {
@@ -313,17 +356,66 @@ namespace graphlab {
         timeout.tv_sec ++;
         timeout.tv_nsec -= 1000000000;
       }
-      return pthread_cond_timedwait(&m_cond, &mut.m_mut, &timeout);
+      return timedwait(mut, timeout);
     }
+
+    /// Like wait() but with a time limit of "sec" seconds
+    inline int timedwait(std::unique_lock<mutex>& mut, size_t sec) const {
+      // take over the pointer
+      auto lock_ptr = mut.mutex();
+      mut.release();
+
+      int ret = timedwait(*lock_ptr, sec);
+
+      // put it back into the unique lock
+      std::unique_lock<mutex> retlock(*lock_ptr, std::adopt_lock);
+      mut.swap(retlock);
+      return ret;
+    }
+    /// Like wait() but with a time limit of "ms" milliseconds
+    inline int timedwait_ms(std::unique_lock<mutex>& mut, size_t ms) const {
+      // take over the pointer
+      auto lock_ptr = mut.mutex();
+      mut.release();
+
+      int ret = timedwait_ms(*mut.mutex(), ms);
+
+      // put it back into the unique lock
+      std::unique_lock<mutex> retlock(*lock_ptr, std::adopt_lock);
+      mut.swap(retlock);
+      return ret;
+    }
+    /// Like wait() but with a time limit of "ns" nanoseconds
+    inline int timedwait_ns(std::unique_lock<mutex>& mut, size_t ns) const {
+      // take over the pointer
+      auto lock_ptr = mut.mutex();
+      mut.release();
+
+      int ret = timedwait_ns(*lock_ptr, ns);
+
+      // put it back into the unique lock
+      std::unique_lock<mutex> retlock(*lock_ptr, std::adopt_lock);
+      mut.swap(retlock);
+      return ret;
+    }
+
     /// Signals one waiting thread to wake up
     inline void signal() const {
       int error = pthread_cond_signal(&m_cond);
       ASSERT_TRUE(!error);
     }
+    /// Signals one waiting thread to wake up. Synonym for signal()
+    inline void notify_one() const {
+      signal();
+    }
     /// Wakes up all waiting threads
     inline void broadcast() const {
       int error = pthread_cond_broadcast(&m_cond);
       ASSERT_TRUE(!error);
+    }
+    /// Synonym for broadcast
+    inline void notify_all() const {
+      broadcast();
     }
     ~conditional() {
       int error = pthread_cond_destroy(&m_cond);
@@ -786,22 +878,18 @@ namespace graphlab {
      */  
     class tls_data {
     public:
-      inline tls_data(size_t thread_id) : thread_id_(thread_id) { }
+      inline tls_data(size_t thread_id);
       inline size_t thread_id() { return thread_id_; }
       inline void set_thread_id(size_t t) { thread_id_ = t; }
-      any& operator[](const size_t& id) { return local_data[id]; }
-      bool contains(const size_t& id) const {
-        return local_data.find(id) != local_data.end();
-      }
-      size_t erase(const size_t& id) {
-        return local_data.erase(id);
-      }
+      any& operator[](const size_t& id);
+      bool contains(const size_t& id) const;
+      size_t erase(const size_t& id);
       inline void set_in_thread_flag(bool val) { in_thread = val; }
       inline bool is_in_thread() { return in_thread; }
     private:
       size_t thread_id_;
       bool in_thread = false;
-      boost::unordered_map<size_t, any> local_data;
+      std::unique_ptr<boost::unordered_map<size_t, any> > local_data;
     }; // end of thread specific data
 
 
@@ -1021,6 +1109,13 @@ namespace graphlab {
     size_t val;
     char __pad__[64 - sizeof(size_t)];
   };
+
+
+  /**
+   * Convenience typedef to be equivalent to the std::condition_variable
+   *
+   */
+  typedef conditional condition_variable;
 }; // End Namespace
 
 #endif

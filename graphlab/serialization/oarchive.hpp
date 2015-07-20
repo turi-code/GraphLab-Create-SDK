@@ -259,7 +259,7 @@ namespace graphlab {
        We therefore call the .save function.
        Here we pick between the archive types using serialize_hard_or_soft_fail
     */
-    template <typename OutArcType, typename T, bool IsPOD>
+    template <typename OutArcType, typename T, bool IsPOD, typename Enable = void>
     struct serialize_impl {
       static void exec(OutArcType& oarc, const T& t) {
         serialize_hard_or_soft_fail<OutArcType, T>::exec(oarc, t);

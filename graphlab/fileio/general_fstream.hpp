@@ -10,10 +10,12 @@
 #define FILEIO_GENERAL_ISTREAM_HPP
 #include <iostream>
 #include <string>
+#include <fstream>
 #include <boost/iostreams/stream.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <graphlab/fileio/general_fstream_source.hpp>
 #include <graphlab/fileio/general_fstream_sink.hpp>
+#include <export.hpp>
 
 namespace graphlab {
 typedef boost::iostreams::stream<fileio_impl::general_fstream_source> 
@@ -22,7 +24,7 @@ typedef boost::iostreams::stream<fileio_impl::general_fstream_source>
  * A wrapper around the union_fstream that exposes a standard istream
  * interface, but automatically performs gzip decoding, and HDFS access.
  */
-class general_ifstream : public general_ifstream_base {
+class EXPORT general_ifstream : public general_ifstream_base {
  private:
    std::string opened_filename;
  public:
@@ -64,6 +66,11 @@ class general_ifstream : public general_ifstream_base {
    * Returns the local file name used by the stream.
    */
   std::string filename() const;
+
+  /**
+   * Returns the underlying stream object
+   */
+  std::shared_ptr<std::istream> get_underlying_stream();
 };
 
 
@@ -75,7 +82,7 @@ typedef boost::iostreams::stream<fileio_impl::general_fstream_sink>
  * A wrapper around the union_fstream that exposes a standard ostream
  * interface, but automatically performs gzip encoding, and HDFS access.
  */
-class general_ofstream: public general_ofstream_base {
+class EXPORT general_ofstream: public general_ofstream_base {
  private:
    std::string opened_filename;
  public:

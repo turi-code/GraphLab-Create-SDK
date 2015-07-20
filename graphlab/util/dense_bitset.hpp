@@ -39,6 +39,7 @@
 #include <graphlab/logger/logger.hpp>
 #include <graphlab/serialization/serialization_includes.hpp>
 #include <graphlab/parallel/atomic_ops.hpp>
+#include <graphlab/util/bitops.hpp>
 
 namespace graphlab {
   
@@ -199,7 +200,7 @@ namespace graphlab {
       size_t transferred = 0;
       while(transferred < b) {
         if (other.array[arrpos] > 0) { 
-          transferred += __builtin_popcountl(other.array[arrpos]);
+          transferred += num_bits_on(other.array[arrpos]);
           array[arrpos] |= other.array[arrpos];
           other.array[arrpos] = 0;
         }
@@ -336,7 +337,7 @@ namespace graphlab {
       for (size_t i = 0; i < arrlen; ++i) {
         if (array[i]) {
           b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(array[i]);
-          return true;
+          return b < len;
         }
       }
       return false;
@@ -351,7 +352,7 @@ namespace graphlab {
       for (size_t i = 0; i < arrlen; ++i) {
         if (~array[i]) {
           b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(~array[i]);
-          return true;
+          return b < len;
         }
       }
       return false;
@@ -368,14 +369,14 @@ namespace graphlab {
       bitpos = next_bit_in_block(bitpos, array[arrpos]);
       if (bitpos != 0) {
         b = (size_t)(arrpos * (sizeof(size_t) * 8)) + bitpos;
-        return true;
+        return b < len;
       }
       else {
         // we have to loop through the rest of the array
         for (size_t i = arrpos + 1; i < arrlen; ++i) {
           if (array[i]) {
             b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(array[i]);
-            return true;
+            return b < len;
           }
         }
       }
@@ -438,7 +439,7 @@ namespace graphlab {
     size_t popcount() const {
       size_t ret = 0;
       for (size_t i = 0;i < arrlen; ++i) {
-        ret +=  __builtin_popcountl(array[i]);
+        ret +=  num_bits_on(array[i]);
       }
       return ret;
     }
@@ -515,13 +516,13 @@ namespace graphlab {
       size_t belowselectedbit = size_t(-1) - (((size_t(1) << b) - 1)|(size_t(1)<<b));
       size_t x = block & belowselectedbit ;
       if (x == 0) return 0;
-      else return (size_t)__builtin_ctzl(x);
+      else return (size_t)n_trailing_zeros(x);
     }
 
     // returns 0 on failure
     inline size_t first_bit_in_block(const size_t& block) const{
       if (block == 0) return 0;
-      else return (size_t)__builtin_ctzl(block);
+      else return (size_t)n_trailing_zeros(block);
     }
 
 
@@ -757,7 +758,7 @@ namespace graphlab {
       for (size_t i = 0; i < arrlen; ++i) {
         if (array[i]) {
           b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(array[i]);
-          return true;
+          return b < len;
         }
       }
       return false;
@@ -771,7 +772,7 @@ namespace graphlab {
       for (size_t i = 0; i < arrlen; ++i) {
         if (~array[i]) {
           b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(~array[i]);
-          return true;
+          return b < len;
         }
       }
       return false;
@@ -790,14 +791,14 @@ namespace graphlab {
       bitpos = next_bit_in_block(bitpos, array[arrpos]);
       if (bitpos != 0) {
         b = (size_t)(arrpos * (sizeof(size_t) * 8)) + bitpos;
-        return true;
+        return b < len;
       }
       else {
         // we have to loop through the rest of the array
         for (size_t i = arrpos + 1; i < arrlen; ++i) {
           if (array[i]) {
             b = (size_t)(i * (sizeof(size_t) * 8)) + first_bit_in_block(array[i]);
-            return true;
+            return b < len;
           }
         }
       }
@@ -831,7 +832,7 @@ namespace graphlab {
     size_t popcount() const {
       size_t ret = 0;
       for (size_t i = 0;i < arrlen; ++i) {
-        ret +=  __builtin_popcountl(array[i]);
+        ret +=  __builtin_popcountll(array[i]);
       }
       return ret;
     }
@@ -912,14 +913,14 @@ namespace graphlab {
       size_t belowselectedbit = size_t(-1) - (((size_t(1) << b) - 1)|(size_t(1)<<b));
       size_t x = block & belowselectedbit ;
       if (x == 0) return 0;
-      else return (size_t)__builtin_ctzl(x);
+      else return (size_t)n_trailing_zeros(x);
     }
 
     // returns 0 on failure
     inline size_t first_bit_in_block(const size_t &block) const {
       // use CAS to set the bit
       if (block == 0) return 0;
-      else return (size_t)__builtin_ctzl(block);
+      else return (size_t)n_trailing_zeros(block);
     }
 
     // clears the trailing bits in the last block which are not part

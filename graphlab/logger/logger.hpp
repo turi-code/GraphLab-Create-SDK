@@ -53,19 +53,26 @@
 #define GRAPHLAB_LOGGER_THROW_ON_FAILURE
 #endif
 
+#if defined(COMPILER_HAS_IOS_BASE_FAILURE_WITH_ERROR_CODE) && (_MSC_VER < 1600)
+#undef COMPILER_HAS_IOS_BASE_FAILURE_WITH_ERROR_CODE
+#endif
+
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
 #include <cstdarg>
+#ifdef COMPILER_HAS_IOS_BASE_FAILURE_WITH_ERROR_CODE
 #include <system_error>
+#endif
 #include <functional>
-#include <pthread.h>
+#include <graphlab/parallel/pthread_h.h>
 #include <graphlab/timer/timer.hpp>
 #include <graphlab/logger/fail_method.hpp>
 #include <graphlab/logger/backtrace.hpp>
 #include <graphlab/util/code_optimization.hpp>
+
 
 /**
  * \def LOG_FATAL
@@ -303,7 +310,7 @@
   do {                                                              \
     auto throw_error = [&]() GL_GCC_ONLY(GL_COLD_NOINLINE_ERROR) {  \
       logstream(LOG_ERROR) << (message) << std::endl;               \
-      throw(message);                                               \
+      throw(std::string(message));                                  \
     };                                                              \
     throw_error();                                                  \
   } while(0)                                                 

@@ -12,6 +12,7 @@
 #include <boost/spirit/include/support_utree.hpp>
 #include <graphlab/flexible_type/flexible_type.hpp>
 #include <graphlab/flexible_type/string_parser.hpp>
+#include <boost/spirit/include/qi_char_class.hpp>
 
 namespace graphlab {
 
@@ -31,7 +32,7 @@ struct flexible_type_parser_impl;
  */
 class flexible_type_parser {
  public:
-  flexible_type_parser(char separator = ',', char escape_char = '\\');
+  flexible_type_parser(std::string delimiter = ",", char escape_char = '\\');
   /**
    * Parses a generalized flexible type from a string. The *str pointer will be
    * updated to point to the character after the last character parsed.
@@ -39,6 +40,14 @@ class flexible_type_parser {
    */
   std::pair<flexible_type, bool>
       general_flexible_type_parse(const char** str, size_t len);
+
+  /**
+   * Parses a non-string flexible type from a string. The *str pointer will be
+   * updated to point to the character after the last character parsed.
+   * Returns a pair of (parsed value, success)
+   */
+  std::pair<flexible_type, bool>
+      non_string_flexible_type_parse(const char** str, size_t len);
 
   /**
    * Parses a flex_dict from a string. The *str pointer will be
@@ -80,8 +89,20 @@ class flexible_type_parser {
   std::pair<flexible_type, bool>
       int_parse(const char** str, size_t len);
 
+
+  /**
+   * Parses an string from a string. The *str pointer will be
+   * updated to point to the character after the last character parsed.
+   * Returns a pair of (parsed value, success)
+   */
+  std::pair<flexible_type, bool>
+      string_parse(const char** str, size_t len);
+
  private:
-  std::shared_ptr<flexible_type_parser_impl<const char*, decltype(qi::standard::space)> > parser;
+  std::shared_ptr<flexible_type_parser_impl<const char*, decltype(boost::spirit::iso8859_1::space)> > parser;
+  std::shared_ptr<flexible_type_parser_impl<const char*, decltype(qi::eoi)> > non_space_parser;
+  bool delimiter_has_space(const std::string& separator);
+  bool m_delimiter_has_space;
 };
 
 } // namespace graphlab

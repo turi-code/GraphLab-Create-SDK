@@ -467,7 +467,7 @@ namespace graphlab {
 
 
 
-    /** 
+  /**
      * \ingroup random
      * Construct a random permutation
      */ 

@@ -16,6 +16,7 @@
 #include <map>
 #include <graphlab/flexible_type/flexible_type.hpp>
 #include <graphlab/sframe/group_aggregate_value.hpp>
+#include <graphlab/sframe/sframe_rows.hpp>
 #include "gl_sarray.hpp"
 namespace graphlab {
 class unity_sarray;
@@ -358,7 +359,7 @@ groupby_descriptor_type ARGMIN(const std::string& agg, const std::string& out);
  * \ingroup group_glsdk
  * A tabular, column-mutable dataframe object that can scale to big data. 
  *
- * The data in \ref gl_sframe is stored column-wise on the GraphLab Create Server
+ * The data in \ref gl_sframe is stored column-wise on the GraphLab Server
  * side, and is stored on persistent storage (e.g. disk) to avoid being
  * constrained by memory size.  Each column in an \ref gl_sframe is a
  * immutable \ref gl_sarray, but \ref gl_sframe objects
@@ -819,6 +820,16 @@ class gl_sframe {
    */
   void save(const std::string& path, const std::string& format="") const;
 
+
+  /**
+   * Performs an incomplete save of an existing SFrame into a directory.
+   * This saved SFrame may reference SFrames in other locations *in the same
+   * filesystem* for certain columns/segments/etc.
+   *
+   * Does not modify the current sframe.
+   */
+  void save_reference(const std::string& path) const;
+
   /**
    * Returns an array of types of each column.
    */
@@ -864,7 +875,7 @@ class gl_sframe {
    * \code
    * gl_sframe sf{{"a", {1,2,3,4,5}},
    *              {"c", {1.0,2.0,3.0,4.0,5.0}}};
-   * std::cout << sf.apply([](const std::vector<flexible_type>& x) { 
+   * std::cout << sf.apply([](const sframe_rows::row& x) { 
    *                         return x[0] * x[1];
    *                       }, flex_type_enum::FLOAT);
    * \endcode
@@ -878,9 +889,8 @@ class gl_sframe {
    * 
    * \see gl_sarray::apply
    */
-  gl_sarray apply(std::function<flexible_type(const std::vector<flexible_type>&)> fn,
+  gl_sarray apply(std::function<flexible_type(const sframe_rows::row&)> fn,
                   flex_type_enum dtype) const;
-
   /**
    * Create an \ref gl_sframe which contains a subsample of the current 
    * \ref gl_sframe.
@@ -2706,6 +2716,8 @@ class gl_sframe {
 
  private:
   void instantiate_new();
+  void ensure_has_sframe_reader() const;
+
   std::shared_ptr<unity_sframe> m_sframe;
   mutable std::shared_ptr<sframe_reader> m_sframe_reader;
 
@@ -2726,7 +2738,7 @@ std::ostream& operator<<(std::ostream& out, const gl_sframe& other);
  */
 class gl_sframe_range {
  public:
-  typedef std::vector<flexible_type> type;
+  typedef sframe_rows::row type;
 
   gl_sframe_range(std::shared_ptr<sframe_reader> m_sframe_reader,
                   size_t start, size_t end);
@@ -2738,7 +2750,7 @@ class gl_sframe_range {
   /// Iterator type
   struct iterator: 
       public boost::iterator_facade<iterator, 
-                const std::vector<flexible_type>, boost::single_pass_traversal_tag> {
+                const sframe_rows::row&, boost::single_pass_traversal_tag> {
    public:
     iterator() = default;
     iterator(const iterator&) = default;
@@ -2780,7 +2792,6 @@ class gl_sframe_range {
    */
   iterator end();
  private:  
-  std::vector<flexible_type> m_current_value;
   std::shared_ptr<sframe_reader_buffer> m_sframe_reader_buffer;
 };
 

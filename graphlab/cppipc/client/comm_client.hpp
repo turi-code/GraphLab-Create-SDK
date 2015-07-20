@@ -24,13 +24,11 @@
 #include <graphlab/cppipc/common/authentication_base.hpp>
 #include <graphlab/cppipc/common/authentication_token_method.hpp>
 #include <graphlab/cppipc/common/ipc_deserializer.hpp>
-#include <csignal>
+#include <graphlab/cppipc/client/console_cancel_handler.hpp>
+#include <exceptions/error_types.hpp>
 #include <cctype>
 #include <graphlab/random/random.hpp>
 #include <atomic>
-
-std::atomic<size_t>& get_running_command();
-std::atomic<size_t>& get_cancelled_command();
 
 // forward declaration of key_value
 namespace graphlab {
@@ -41,6 +39,8 @@ class key_value;
 
 namespace cppipc {
 
+std::atomic<size_t>& get_running_command();
+std::atomic<size_t>& get_cancelled_command();
 
 class comm_client;
 
@@ -74,7 +74,7 @@ struct deserialize_return_and_clear<void, false> {
 };
 
 
-}
+} // namespace detail
 
 class object_factory_proxy;
 
@@ -206,14 +206,15 @@ class object_factory_proxy;
  * in the comm_client itself. These are make_object(), ping() and 
  * delete_object()
  */
-class comm_client {
+class EXPORT comm_client {
  private:
   void* zmq_ctx;
+  bool owns_zmq_ctx = true;
   graphlab::zookeeper_util::key_value* keyval;
   libfault::async_request_socket object_socket;
   // This is a pointer because the endpoint address must be received from the
   // server, so it cannot be constructed in the constructor
-  libfault::async_request_socket *control_socket;
+  libfault::async_request_socket *control_socket = NULL;
   libfault::subscribe_socket subscribesock;
   libfault::socket_receive_pollset pollset;
   
@@ -290,31 +291,25 @@ class comm_client {
   /**
    * Sets to true when the ping thread is done
    */
-  volatile bool ping_thread_done;
+  volatile bool ping_thread_done = false;
 
   /** 
    * Server alive is true if the server is reachable some time in the 
    * last 3 pings. Server_alive is true on startup.
    */
-  volatile bool server_alive; 
+  volatile bool server_alive = true; 
 
   /**
    * True if the socket is closed
    */
-  bool socket_closed;
+  bool socket_closed = false;
 
   /**
    * The number of pings which have failed consecutively.
    */
-  volatile size_t ping_failure_count; 
+  volatile size_t ping_failure_count = 0;
 
-  size_t num_tolerable_ping_failures; 
-
-  /**
-   * The minimum time frequency (in seconds) at which the client synchronizes 
-   * object lists with the server
-   */
-  size_t sync_object_interval;
+  size_t num_tolerable_ping_failures = 10;
 
   /**
    * Callback issued when server reports status
@@ -340,7 +335,7 @@ class comm_client {
   /**
    * Set to true when the client is started. False otherwise.
    */
-  bool started;
+  bool started = false;
 
   /**
    * The name this client was told to connect to.
@@ -350,13 +345,7 @@ class comm_client {
   /**
    * The signal handler that was in effect before this client was established
    */
-  struct sigaction prev_sigint_act;
-  bool sigint_handling_enabled;
-
-  /**
-   * The signal handler that will handle ctrl-c from the user during a server operation
-   */
-  struct sigaction sigint_act;
+  bool cancel_handling_enabled = false;
 
  public:
 
@@ -398,6 +387,21 @@ class comm_client {
               const std::string secret_key = "",
               const std::string server_public_key = "",
               bool ops_interruptible = false);
+
+  /**
+   * Constructs an inproc comm_client. The inproc comm_client 
+   * and comm_server are required to have the same zmq_ctx.
+   *
+   * \param name The inproc socket address, must start with inproc://
+   * \param zmq_ctx The same zeromq context as the comm_server.
+   */
+  comm_client(std::string name, void* zmq_ctx);
+
+
+  /**
+   * Initialize the comm_client, called right inside the constructor.
+   */
+  void init(bool ops_interruptible = false);
 
   /**
    * Initializes connections with the servers
@@ -449,22 +453,6 @@ class comm_client {
   size_t decr_ref_count(size_t object_id);
 
   size_t get_ref_count(size_t object_id);
-
-  /**
-   * Get/change the minimum amount of time that passes before the client
-   * sends a list of active objects to the server for server-side garbage
-   * collection.
-   */
-  inline void set_sync_object_interval(size_t seconds) {
-    sync_object_interval = seconds;
-    object_sync_point = std::chrono::steady_clock::now() +
-      std::chrono::seconds(sync_object_interval);
-  }
-
-  inline size_t get_sync_object_interval() {
-    return sync_object_interval;
-  }
-
 
   /**
    * This thread is used to serve the status callbacks.
@@ -577,14 +565,6 @@ class comm_client {
   }
 
   /**
-   * Tries to synchronize the list of tracked objects with the server.
-   * try_send_tracked_objects has a rate limiter which can be changed by
-   * \ref set_sync_object_interval()
-   */
-  int try_send_tracked_objects(bool force = false);
-
-
-  /**
    * Tries to synchronize the list of tracked objects with the server by
    * sending a list of objects to be deleted.
    * Returns 0 on success, -1 on failure.
@@ -675,17 +655,12 @@ class comm_client {
     r.store(command_id);
 
     // Read and save the current signal handler (e.g. Python's SIGINT handler)
-    if(sigint_handling_enabled && sigaction(SIGINT, NULL, &prev_sigint_act) < 0) {
+    // Set signal handler to catch CTRL-C during this call
+    if(cancel_handling_enabled &&
+        !console_cancel_handler::get_instance().set_handler()) {
       logstream(LOG_WARNING) << "Could not read previous signal handler, "
         "thus will not respond to CTRL-C.\n";
-      sigint_handling_enabled = false;
-    }
-
-    // Set signal handler to catch CTRL-C during this call
-    if(sigint_handling_enabled && sigaction(SIGINT, &sigint_act, NULL) < 0) {
-      logstream(LOG_WARNING) <<
-        "Could not set signal handler, will not respond to CTRL-C any longer.\n";
-      sigint_handling_enabled = false;
+      cancel_handling_enabled = false;
     }
 
     // call
@@ -693,16 +668,16 @@ class comm_client {
     int retcode = internal_call(msg, reply);
 
     // Replace the SIGINT signal handler with the original one
-    if(sigint_handling_enabled) {
-      if(sigaction(SIGINT, &prev_sigint_act, NULL) < 0) {
+    if(cancel_handling_enabled) {
+      if(!console_cancel_handler::get_instance().unset_handler()) {
         logstream(LOG_WARNING) <<
           "Could not reset signal handler after server operation. Disabling CTRL-C support.\n";
-        sigint_handling_enabled = false;
+        cancel_handling_enabled = false;
       }
     }
 
     // Check if we need to re-raise a SIGINT in Python
-    if(sigint_handling_enabled) {
+    if(cancel_handling_enabled) {
       // Check if CTRL-C was pressed for this command.
       size_t running_command = get_running_command().load();
       if(running_command && running_command == get_cancelled_command().load()) {
@@ -715,7 +690,7 @@ class comm_client {
           // Raise this again for Python to make sure you can break out of a for
           // loop with a graphlab call inside that does not throw on ctrl-c
           // NOTE: I don't think I care if raise fails.
-          raise(SIGINT);
+          console_cancel_handler::get_instance().raise_cancel();
         }
       }
     }
@@ -741,9 +716,9 @@ class comm_client {
         case reply_status::INDEX_ERROR:
           throw std::out_of_range(custommsg);
         case reply_status::MEMORY_ERROR:
-          throw bad_alloc(custommsg);
+          throw graphlab::bad_alloc(custommsg);
         case reply_status::TYPE_ERROR:
-          throw bad_cast(custommsg);
+          throw graphlab::bad_cast(custommsg);
         default:
           throw ipcexception(reply.status, retcode, custommsg);
       }

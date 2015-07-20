@@ -1,11 +1,3 @@
-/**
- * Copyright (C) 2015 Dato, Inc.
- * All rights reserved.
- *
- * This software may be modified and distributed under the terms
- * of the BSD license. See the LICENSE file for details.
- */
-
 // (C) Copyright Jeremy Siek 2001.
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at

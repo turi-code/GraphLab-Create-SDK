@@ -31,10 +31,9 @@
 #ifndef GRAPHLAB_MUTEX_HPP
 #define GRAPHLAB_MUTEX_HPP
 
-
-#include <pthread.h>
+#include <graphlab/parallel/pthread_h.h>
 #include <graphlab/logger/assertions.hpp>
-
+#include <mutex>
 
 namespace graphlab {
 
@@ -43,11 +42,21 @@ namespace graphlab {
    *
    * Simple wrapper around pthread's mutex.
    * Before you use, see \ref parallel_object_intricacies.
+   *
+   * Windows recursive mutex are annoyingly recursive. 
+   * We need to prevent recursive locks. We do this by associating an 
+   * addition boolean "locked" to the mutex.
+   * Hence in the event of a double lock, on Windows the behavior is slightly
+   * different. On Linux/Mac this will trigger a deadlock. On Windows,
+   * this will trigger an assertion failure.
    */
   class mutex {
   public:
     // mutable not actually needed
     mutable pthread_mutex_t m_mut;
+#ifdef _WIN32
+    mutable volatile bool locked = false;
+#endif
     /// constructs a mutex
     mutex() {
       int error = pthread_mutex_init(&m_mut, NULL);
@@ -73,21 +82,29 @@ namespace graphlab {
     /// Acquires a lock on the mutex
     inline void lock() const {
       int error = pthread_mutex_lock( &m_mut  );
-      // if (error) std::cerr << "mutex.lock() error: " << error << std::endl;
-      ASSERT_TRUE(!error);
+      DASSERT_TRUE(!error);
+#ifdef _WIN32
+      DASSERT_TRUE(!locked);
+      locked = true;
+#endif
     }
     /// Releases a lock on the mutex
     inline void unlock() const {
+#ifdef _WIN32
+      locked = false;
+#endif
       int error = pthread_mutex_unlock( &m_mut );
-      ASSERT_TRUE(!error);
+      DASSERT_TRUE(!error);
     }
     /// Non-blocking attempt to acquire a lock on the mutex
     inline bool try_lock() const {
+#ifdef _WIN32
+      if (locked) return false;
+#endif
       return pthread_mutex_trylock( &m_mut ) == 0;
     }
     friend class conditional;
   }; // End of Mutex
-
 
 
 
@@ -139,12 +156,12 @@ namespace graphlab {
     inline void lock() const {
       int error = pthread_mutex_lock( &m_mut  );
       // if (error) std::cerr << "mutex.lock() error: " << error << std::endl;
-      ASSERT_TRUE(!error);
+      DASSERT_TRUE(!error);
     }
     /// Releases a lock on the mutex
     inline void unlock() const {
       int error = pthread_mutex_unlock( &m_mut );
-      ASSERT_TRUE(!error);
+      DASSERT_TRUE(!error);
     }
     /// Non-blocking attempt to acquire a lock on the mutex
     inline bool try_lock() const {
@@ -157,6 +174,5 @@ namespace graphlab {
 
 
 } // end of graphlab namespace
-
 
 #endif

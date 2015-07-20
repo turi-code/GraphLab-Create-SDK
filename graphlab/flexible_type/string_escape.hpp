@@ -12,34 +12,17 @@
 namespace graphlab {
 
 /**
- * Take the second character of an escaped character and generate its
- * matching unescaped character. For instance, given "n" this returns "\n";
+ * Unescapes a string inplace
  */
-inline static std::string unescape_char(char c) noexcept {
-  switch(c) {
-   case '\'':
-     return std::string("\'");
-   case '\"':
-     return std::string("\"");
-   case '\\':
-     return std::string("\\");
-   case '/':
-     return std::string("/");
-   case 't':
-     return std::string("\t");
-   case 'b':
-     return std::string("\b");
-   case 'r':
-     return std::string("\r");
-   case 'n':
-     return std::string("\n");
-   case '0':
-     return std::string("\0");
-   default:
-     return std::string("\\") + c;
-  }
-}
+void unescape_string(std::string& cal, char escape_char, 
+                     char quote_char, bool double_quote);
 
+/**
+ * Unescapes a string inplace, returning the new length
+ */
+size_t unescape_string(char* cal, 
+                       size_t length, char escape_char, 
+                       char quote_char, bool double_quote);
 /**
  * Escapes a string from val into output.
  * The length of the output string is in returned in output_len.
