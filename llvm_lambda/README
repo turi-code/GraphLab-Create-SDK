@@ -1,0 +1,26 @@
+LLVM Lambda
+===========
+
+Simple prototype of a LLVM lambda executor.
+
+Frontend uses Numba to compile python code into LLVM IR.
+Backend is a GLC extension to execute LLVM code.
+
+Advantages:
+- Native speed
+- Code optimization
+- Eliminates communications overhead
+
+
+Requirement (OSX)
+===========
+1. anaconda or miniconda
+2. Numba (conda install numba)
+3. GraphLab Create 
+4. Graphlab Create SDK
+5. llvm 3.6
+
+Build the module
+----------------
+1. Edit the Makefile and change LLVM_HOME to the root directory of llvm-3.6+
+2. make
