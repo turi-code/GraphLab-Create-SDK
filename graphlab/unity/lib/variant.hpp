@@ -23,13 +23,14 @@ class unity_sgraph_base;
 class unity_sarray_base;
 
 /**
- * A variant object that can be communicated between Python and C++ which 
- * contains either a 
+ * A variant object that can be communicated between Python and C++ which
+ * contains either a
  * \li flexible_type
- * \li graph 
+ * \li std::shared_ptr<unity_sgraph>
  * \li dataframe_t
  * \li model
- * \li sframe 
+ * \li std::shared_ptr<unity_sframe>
+ * \li std::shared_ptr<unity_sarray>
  * \li std::map<variant>
  * \li std::vector<variant>
  *
@@ -40,11 +41,11 @@ class unity_sarray_base;
  * from a variant.
  */
 typedef typename boost::make_recursive_variant<
-            flexible_type, 
-            std::shared_ptr<unity_sgraph_base>, 
-            dataframe_t, 
-            std::shared_ptr<model_base>, 
-            std::shared_ptr<unity_sframe_base>, 
+            flexible_type,
+            std::shared_ptr<unity_sgraph_base>,
+            dataframe_t,
+            std::shared_ptr<model_base>,
+            std::shared_ptr<unity_sframe_base>,
             std::shared_ptr<unity_sarray_base>,
             std::map<std::string, boost::recursive_variant_>,
             std::vector<boost::recursive_variant_>,
@@ -94,12 +95,12 @@ inline std::string get_variant_which_name(int i) {
 
 namespace graphlab{ namespace archive_detail {
 
-template <> 
-struct serialize_impl<oarchive, graphlab::variant_type, false> { 
+template <>
+struct serialize_impl<oarchive, graphlab::variant_type, false> {
   static void exec(oarchive& arc, const graphlab::variant_type& tval);
 };
 
-template <> 
+template <>
 struct deserialize_impl<iarchive, graphlab::variant_type, false> {
   static void exec(iarchive& arc, graphlab::variant_type& tval);
 };
@@ -112,7 +113,7 @@ namespace graphlab {
 // A list of accessors to help Cython access the variant
 
 /**
- * Gets a reference to a content of a variant. 
+ * Gets a reference to a content of a variant.
  * Throws if variant contains an inappropriate type.
  */
 template <typename T>
@@ -120,7 +121,7 @@ inline T& variant_get_ref(variant_type& v) {
   try {
     boost::get<T>(v);
   } catch (...) {
-    std::string errormsg = std::string("Expecting ") + 
+    std::string errormsg = std::string("Expecting ") +
         get_variant_which_name(variant_type(T()).which()) +
         " but got a " + get_variant_which_name(v.which());
     throw(errormsg);
@@ -129,7 +130,7 @@ inline T& variant_get_ref(variant_type& v) {
 }
 
 /**
- * Gets a const reference to the content of a variant. 
+ * Gets a const reference to the content of a variant.
  * Throws if variant contains an inappropriate type.
  */
 template <typename T>
@@ -161,7 +162,7 @@ template <typename T>
 inline variant_type to_variant(const T& f) {
   return variant_converter<typename std::decay<T>::type>().set(f);
 }
-} // namespace graphlab 
+} // namespace graphlab
 
 namespace graphlab {
 /**

@@ -525,6 +525,7 @@ class file_logger{
                                  msg.c_str() + streambufentry->header_len, 
                                  msg.length() - streambufentry->header_len);
         }
+        streambufentry->header_len = 0;
         pthread_mutex_unlock(&mut);
       }
       streambuffer.str("");

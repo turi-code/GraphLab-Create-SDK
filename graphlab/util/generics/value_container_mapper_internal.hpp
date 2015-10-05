@@ -1,3 +1,10 @@
+/**
+ * Copyright (C) 2015 Dato, Inc.
+ * All rights reserved.
+ *
+ * This software may be modified and distributed under the terms
+ * of the BSD license. See the LICENSE file for details.
+ */
 #ifndef GRAPHLAB_VALUE_CONTAINER_MAPPER_INTERNAL_H_
 #define GRAPHLAB_VALUE_CONTAINER_MAPPER_INTERNAL_H_
 

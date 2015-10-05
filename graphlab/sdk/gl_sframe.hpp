@@ -30,6 +30,11 @@ class gl_sframe_range;
 class gl_sarray_reference;
 class const_gl_sarray_reference;
 
+typedef std::map<std::string, flex_type_enum> str_flex_type_map;
+typedef std::map<std::string, flexible_type> csv_parsing_config_map;
+typedef std::map<std::string, std::string> string_map;
+typedef std::map<std::string, std::shared_ptr<unity_sarray_base>> csv_parsing_errors;
+
 /**
  * \ingroup group_glsdk
  * \brief All the available groupby aggregators aggregators.
@@ -276,6 +281,17 @@ groupby_descriptor_type STDV(const std::string& col);
  */
 groupby_descriptor_type SELECT_ONE(const std::string& col);
 
+/**
+ * Builtin arg minimum aggregator for groupby.
+ *
+ * Example: Get the number of unique movies
+ * \code
+ * sf.groupby("user",
+ *            {{"best_movie", aggregate::COUNT_DISTINCT("rating")}});
+ * \endcode
+ */
+groupby_descriptor_type COUNT_DISTINCT(const std::string& col);
+
 ///@{
 /**
  * Builtin aggregator that combines values from one or two columns in one group
@@ -411,10 +427,19 @@ groupby_descriptor_type ARGMIN(const std::string& agg, const std::string& out);
  *
  * Or iterated efficiently using the \ref range_iterator
  * \code
- * for (const std::vector<flexible_type>& i: sa.range_iterator() {
+ * for (const auto& i: sa.range_iterator()) {
  *   ... 
  * }
  * \endcode
+ *
+ * Note that using "auto" above is more efficient than using vector<flexible_type>
+ * \code
+ * for (const std::vector<flexible_type> & i: sa.range_iterator()) {
+ * \endcode
+ *
+ * The range_iterator materializes the SFrame if not already materialized, but
+ * \ref materialize_to_callback can be used to read the SFrame without
+ * materialization.
  *
  * The gl_sframe can constructed in a variety of means: 
  *   - If the data to be written is already in memory, it can be created
@@ -483,6 +508,14 @@ class gl_sframe {
    */
   explicit gl_sframe(const std::string& directory);
 
+  void construct_from_sframe_index(const std::string& directory);
+
+  /**
+   * Constructs a gl_sframe from a csv file 
+   */
+  void construct_from_csvs(std::string csv_file, csv_parsing_config_map csv_config,
+    str_flex_type_map column_type_hints);
+
   /// Copy assignment
   gl_sframe& operator=(const gl_sframe&);
   /// Move assignment
@@ -505,6 +538,8 @@ class gl_sframe {
    * \endcode
    */
   gl_sframe(const std::map<std::string, std::vector<flexible_type> >& data);
+
+  void construct_from_dataframe(const std::map<std::string, std::vector<flexible_type> >& data);
 
   /**
    * Constructs a gl_sframe from a collection of gl_sarrays.
@@ -564,8 +599,8 @@ class gl_sframe {
    * an exception if the index is out of bounds. This operation is generally
    * inefficient: the range_iterator() is prefered.
    */
-  std::vector<flexible_type> operator[](int i);
-  std::vector<flexible_type> operator[](int i) const;
+  std::vector<flexible_type> operator[](int64_t i);
+  std::vector<flexible_type> operator[](int64_t i) const;
   ///@}
 
   ///@{
@@ -603,8 +638,8 @@ class gl_sframe {
    * // ret a gl_sframe with one column a: [8,9]
    * \endcode
    */
-  gl_sframe operator[](const std::initializer_list<int>& slice);
-  gl_sframe operator[](const std::initializer_list<int>& slice) const;
+  gl_sframe operator[](const std::initializer_list<int64_t>& slice);
+  gl_sframe operator[](const std::initializer_list<int64_t>& slice) const;
   ///@}
 
   /**
@@ -686,9 +721,7 @@ class gl_sframe {
    */
   ///@{
   const_gl_sarray_reference operator[](const std::string& column) const;
-  const_gl_sarray_reference operator[](const char* column) const;
   gl_sarray_reference operator[](const std::string& column);
-  gl_sarray_reference operator[](const char* column);
   ///@}
 
   //@{
@@ -714,8 +747,46 @@ class gl_sframe {
   friend class gl_sframe_range;
 
 
+
+  /**
+   * Calls a callback function passing each row of the SArray.
+   *
+   * This does not materialize the array if not necessary.
+   *
+   * The callback may be called in parallel in which case the argument provides
+   * a thread number. The function should return false, but may return
+   * true at anytime to quit the iteration process. It may also throw exceptions
+   * which will be forwarded to the caller of this function.
+   *
+   * Each call to the callback passes:
+   *  - a thread id,
+   *  - a shared_ptr to an sframe_rows object
+   * 
+   * The sframe_rows object looks like a vector<vector<flexible_type>>.
+   * i.e. to look at all the rows, you need to write:
+   *
+   * \code
+   * sf.materalize_to_callback([&](size_t, const std::shared_ptr<sframe_rows>& rows) {
+   *   for(const auto& row: *rows) {
+   *      // each row looks like an std::vector<flexible_type>
+   *      // and can be casted to to a vector<flexible_type> if necessayr
+   *   }
+   * });
+   * \endcode
+   *
+   * \param callback The callback to call
+   * \param nthreads Number of threads. If not specified, #cpus is used
+   */
+  void materialize_to_callback(
+      std::function<bool(size_t, const std::shared_ptr<sframe_rows>&)> callback,
+      size_t nthreads = (size_t)(-1));
+
   /**
    * Returns a one pass range object with begin() and end() iterators.
+   *
+   * This will materialize the array.
+   *
+   * See \ref materialize_to_callback for a lazy version.
    *
    * \param start The starting index of the range
    * \param end The ending index of the range
@@ -1066,6 +1137,7 @@ class gl_sframe {
    */
   gl_sframe topk(const std::string& column_name, size_t k=10, bool reverse=false) const;
 
+  size_t column_index(const std::string &column_name) const;
 
   /**
    * Extracts one column of the gl_sframe.
@@ -2514,7 +2586,7 @@ class gl_sframe {
    * [4 rows x 3 columns]
    * \endcode
    */
-  gl_sframe sort(const std::map<std::string, bool>& column_and_ascending) const;
+  gl_sframe sort(const std::vector<std::pair<std::string, bool>>& column_and_ascending) const;
 
   /**
    * Remove missing values from an \ref gl_sframe. A missing value is either "FLEX_UNDEFINED"

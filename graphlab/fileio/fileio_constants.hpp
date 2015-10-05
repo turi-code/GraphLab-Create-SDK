@@ -21,23 +21,24 @@ std::string get_system_temp_directory();
 /**
  * The protocol prefix cache:// to identify a cached file.
  */
-extern const std::string CACHE_PREFIX;
+std::string get_cache_prefix();
 
 /**
  * The "directory" (cache://tmp/) which all cached files are located in 
  */
-extern const std::string TMP_CACHE_PREFIX;
+std::string get_temp_cache_prefix();
 
 /**
  * The physical directory (/var/tmp) which all cached files are located in .
  * colon seperated.
  */
-extern std::string CACHE_FILE_LOCATIONS;
+std::string get_cache_file_locations();
+void set_cache_file_locations(std::string);
 
 /**
  * Additional HDFS location for storing large temp files.
  */
-extern std::string CACHE_FILE_HDFS_LOCATION;
+std::string get_cache_file_hdfs_location();
 
 /**
  * The initial memory capacity assigned to caches
@@ -69,9 +70,8 @@ extern size_t FILEIO_WRITER_BUFFER_SIZE;
 /**
  * The alternative ssl certificate file and directory.
  */
-extern std::string FILEIO_ALTERNATIVE_SSL_CERT_DIR;
-extern std::string FILEIO_ALTERNATIVE_SSL_CERT_FILE;
-
+std::string get_alternative_ssl_cert_dir();
+std::string get_alternative_ssl_cert_file();
 
 }
 }

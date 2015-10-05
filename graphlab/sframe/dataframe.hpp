@@ -361,34 +361,6 @@ class dataframe_row_iterator {
 
 /**
  * \ingroup unity
- * The dataframe is a column-wise representation. This class provides row-wise 
- * insertion into a dataframe.
- */
-class dataframe_inserter {
- private:
-  dataframe_t& frame;
-  const flexible_type_registry& registry;
-  // reference to the internal datastructures in the dataframe
-  std::vector<std::pair<field_id_type, std::vector<flexible_type>*> > values;  
-  std::map<field_id_type, size_t> field_to_column_index;
-  // number of rows in the frame
-  size_t nrows;
- public:
-
-  /**
-   * Constructor. Creates an inserter object which inserts rows into
-   * the provided dataframe, using the provided registry to figure out field-id
-   * and field name mappings.
-   */
-  dataframe_inserter(dataframe_t& frame,
-                     const flexible_type_registry& registry);
-
-};
-
-
-
-/**
- * \ingroup unity
  * Cuts up the provided begin iterator to a dataframe into rows, calling the
  * lambda with a new iterator and the range of rows it is meant to process.
  */

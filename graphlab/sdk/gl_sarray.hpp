@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <string>
 #include <iostream>
+#include <graphlab/sframe/sframe_rows.hpp>
 #include <graphlab/flexible_type/flexible_type.hpp>
 
 namespace graphlab {
@@ -127,6 +128,11 @@ class sarray_reader_buffer;
  * }
  * \endcode
  *
+ *
+ * The range_iterator materializes the SFrame if not already materialized, but
+ * \ref materialize_to_callback can be used to read the SFrame without
+ * materialization.
+ *
  * The gl_sarray can constructed in a variety of means: 
  *   - If the data to be written is already in memory, it can be created
  *     using the 
@@ -228,6 +234,9 @@ class gl_sarray {
    *
    */
   gl_sarray(const std::vector<flexible_type>& values, 
+            flex_type_enum dtype = flex_type_enum::UNDEFINED);
+
+  void construct_from_vector(const std::vector<flexible_type>& values,
             flex_type_enum dtype = flex_type_enum::UNDEFINED);
 
   /**
@@ -409,6 +418,12 @@ class gl_sarray {
   gl_sarray operator|(const gl_sarray& other) const;
   ///@}
 
+  /**
+   * Performs an element-wise substring search of "item". The current array
+   * must contains strings and item must be a string. Produces a 1 for each
+   * row if item is a substring of the row and 0 otherwise.
+   */
+  gl_sarray contains(const flexible_type& other) const;
 
   /**
    * Returns the value at a particular array index; generally inefficient.
@@ -417,7 +432,7 @@ class gl_sarray {
    * an exception if the index is out of bounds. This operation is generally
    * inefficient: the range_iterator() is prefered.
    */
-  flexible_type operator[](int i) const;
+  flexible_type operator[](int64_t i) const;
 
   /**
    * Performs a logical filter.
@@ -466,7 +481,7 @@ class gl_sarray {
    * // ret is the array [8,9]
    * \endcode
    */
-  gl_sarray operator[](const std::initializer_list<int>& slice) const;
+  gl_sarray operator[](const std::initializer_list<int64_t>& slice) const;
 
   /**************************************************************************/
   /*                                                                        */
@@ -494,11 +509,51 @@ class gl_sarray {
 
 
   /**
+   * Calls a callback function passing each row of the SArray.
+   *
+   * This does not materialize the array if not necessary.
+   * The callback may be called in parallel in which case the argument provides
+   * a thread number. The function should return false, but may return
+   * true at anytime to quit the iteration process. It may also throw exceptions
+   * which will be forwarded to the caller of this function.
+   *
+   * Each call to the callback passes:
+   *  - a thread id,
+   *  - a shared_ptr to an sframe_rows object
+   * 
+   * The sframe_rows object looks like a vector<vector<flexible_type>>.
+   * i.e. to look at all the rows, you need to write:
+   *
+   * \code
+   * sa.materalize_to_callback([&](size_t, const std::shared_ptr<sframe_rows>& rows) {
+   *   for(const auto& row: *rows) {
+   *      // each row looks like an std::vector<flexible_type>
+   *      // and can be casted to to a vector<flexible_type> if necessary
+   *
+   *      // But this this is an sarray, the element you want is always in 
+   *      // row[0]
+   *   }
+   * });
+   * \endcode
+   *
+   * \param callback The callback to call
+   * \param nthreads Number of threads. If not specified, #cpus is used
+   */
+  void materialize_to_callback(
+      std::function<bool(size_t, const std::shared_ptr<sframe_rows>&)> callback,
+      size_t nthreads = (size_t)(-1));
+
+
+  /**
    * Returns a one pass range object with begin() and end() iterators.
+   *
+   * This will materialize the array.
+   *
+   * See \ref materialize_to_callback for a lazy version.
    *
    * \param start The starting index of the range
    * \param end The ending index of the range
-   * 
+   *
    * \code
    * // create a sequence of 1,000 integer values
    * gl_sarray sa = gl_sarray::from_sequence(0,1000);
@@ -1365,7 +1420,6 @@ class gl_sarray {
    */
   gl_sarray unique() const;
 
-
   /**
    * Length of each element in the current \ref gl_sarray.  Only works on \ref
    * gl_sarray objects of dict, array, or list type. If a given element is a
@@ -1590,6 +1644,67 @@ class gl_sarray {
    * 
    */
   gl_sarray sort(bool ascending=true) const;
+
+
+  /**
+   *
+   *  This returns an SArray with each element sliced accordingly to the
+   *  slice specified. 
+   *
+   *  \param start The start position of the slice
+   *  \param stop The stop position of the slice
+   *  \param step The step size of the slice (default = 1)
+   *
+   *  \return an SArray with each individual vector/string/list sliced
+   *  according to the arguments.
+   *
+   *  This is conceptually equivalent to the python equivalent of:
+   *  \code
+   *     g.apply(lambda x: x[start:step:stop])
+   *  \endcode
+   *
+   *  The SArray must be of type list, vector, or string.
+   *
+   *  For instance:
+   *  \code
+   *  g = SArray({"abcdef","qwerty"});
+   *  std::cout << g.subslice(0, 2);
+   *  \endcode
+   *
+   *  Produces output:
+   *  \code{.txt}
+   *  dtype: str
+   *  Rows: 2
+   *  ["ab", "qw"]
+   *  \endcode
+   * 
+   *  Negative indeices:
+   *  \code
+   *  std::cout << g.subslice(3,-1);
+   *  \endcode
+   *  Produces output:
+   *  \code{.txt}
+   *  dtype: str
+   *  Rows: 2
+   *  ["de", "rt"]
+   *  \endcode
+   *
+   *  Arrays:
+   *  \code
+   *  g = SArray({{1,2,3}, {4,5,6}});
+   *  std::cout << g.subslice(0, 1);
+   *  \endcode
+   *
+   *  Produces output:
+   *  \code{.txt}
+   *  dtype: str
+   *  Rows: 2
+   *  [[1], [4]]
+   *  \endcode
+   */
+  gl_sarray subslice(flexible_type start = FLEX_UNDEFINED, 
+                     flexible_type stop = FLEX_UNDEFINED, 
+                     flexible_type step = FLEX_UNDEFINED);
 
   /**
    * \internal

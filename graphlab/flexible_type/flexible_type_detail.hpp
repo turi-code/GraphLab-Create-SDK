@@ -26,16 +26,21 @@ namespace graphlab {
 namespace flexible_type_impl {
 
 /**
- * custom implementation of my_from_time_t that handles  
+ * custom implementation of conversion of ptime to time_t that handles  
  * time_t's that does not fit in int32_t integers.
  */
-boost::posix_time::ptime my_from_time_t(std::time_t offset);
+boost::posix_time::ptime ptime_from_time_t(std::time_t offset, int32_t microseconds = 0);
 
 /**
  * Function that takes a ptime argument and generates _
  * its corresponding time_t. 
  */
-flex_int my_to_time_t(const boost::posix_time::ptime & time);
+flex_int ptime_to_time_t(const boost::posix_time::ptime & time);
+
+/**
+ * Takes a ptime argument and returns the fractional second component in us.
+ */
+flex_int ptime_to_fractional_microseconds(const boost::posix_time::ptime & time);
 
 /**
  * \ingroup unity
@@ -83,9 +88,11 @@ struct lt_operator {
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(T& t, const U& u) const { FLEX_TYPE_ASSERT(false); return false; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_float u) const { return t < u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_int u) const { return t < u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.first < u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t < u.first; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t.first < u.first; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.posix_timestamp() < u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t < u.posix_timestamp(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_float u) const { return t.microsecond_res_timestamp() < u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_date_time u) const { return t < u.microsecond_res_timestamp(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time& t, const flex_date_time& u) const { return t < u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_float u) const { return t < u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_int u) const { return t < u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const std::string& t, const std::string& u) const { return t < u; }
@@ -120,9 +127,11 @@ struct gt_operator {
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(T& t, const U& u) const { FLEX_TYPE_ASSERT(false); return false; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_float u) const { return t > u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.first > u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t > u.first; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t.first > u.first; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.posix_timestamp() > u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t > u.posix_timestamp(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_float u) const { return t.microsecond_res_timestamp() > u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_date_time u) const { return t > u.microsecond_res_timestamp(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time& t, const flex_date_time& u) const { return t > u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_int u) const { return t > u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_float u) const { return t > u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_int u) const { return t > u; }
@@ -156,9 +165,15 @@ struct gt_operator {
 struct equality_operator {
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(T& t, const U& u) const { return false; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t.first == u.first; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.first == u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t == u.first; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t == u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.posix_timestamp() == u && t.microsecond() == 0; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t == u.posix_timestamp() && u.microsecond() == 0; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_float u) const { 
+    return std::fabs(t.microsecond_res_timestamp() - u) < flex_date_time::MICROSECOND_EPSILON; 
+  }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_date_time u) const { 
+    return std::fabs(t - u.microsecond_res_timestamp()) < flex_date_time::MICROSECOND_EPSILON; 
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_int u) const { return t == u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_float u) const { return t == u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_string& t, const flex_string& u) const { return t == u; }
@@ -191,11 +206,19 @@ struct approx_equality_operator {
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(T& t, const U& u) const { return false; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_undefined t, const flex_undefined u) const { return true; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t.first == u.first; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.first == u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t == u.first; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_date_time u) const { return t == u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_int u) const { return t.posix_timestamp() == u && t.microsecond() == 0; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_date_time u) const { return t == u.posix_timestamp() && u.microsecond() == 0; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_date_time t, const flex_float u) const { 
+    return std::fabs(t.microsecond_res_timestamp() - u) < flex_date_time::MICROSECOND_EPSILON; 
+  }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_date_time u) const { 
+    return std::fabs(t - u.microsecond_res_timestamp()) < flex_date_time::MICROSECOND_EPSILON; 
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_int u) const { return t == u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_float u) const { return t == u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_float u) const {
+    return (std::isnan(t) && std::isnan(u)) || (t == u);
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_int t, const flex_float u) const { return t == u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_float t, const flex_int u) const { return t == u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN bool operator()(const flex_string& t, const flex_string& u) const { return t == u; }
@@ -269,7 +292,18 @@ struct plus_equal_operator{
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(T& t, const U& u) const { FLEX_TYPE_ASSERT(false); }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_int u) const { t += u; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const { t.first += u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const { t.set_posix_timestamp(t.posix_timestamp() + u); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_float u) const {
+    int64_t integral_part = std::floor(u);
+    int64_t us_part = (u - integral_part) * flex_date_time::MICROSECONDS_PER_SECOND;
+    t.set_posix_timestamp(t.posix_timestamp() + integral_part);
+    auto microsecond = t.microsecond() + us_part;
+    if (microsecond >= flex_date_time::MICROSECONDS_PER_SECOND) {
+      t.set_posix_timestamp(t.posix_timestamp() + 1);
+      microsecond -= flex_date_time::MICROSECONDS_PER_SECOND;
+    }
+    t.set_microsecond(microsecond);
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_float u) const { t += u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_float& t, const flex_int u) const { t += u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_float& t, const flex_float u) const { t += u; }
@@ -297,7 +331,18 @@ struct plus_equal_operator{
 struct minus_equal_operator{
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(T& t, const U& u) const { FLEX_TYPE_ASSERT(false); }
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const { t.first -= u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const { t.set_posix_timestamp(t.posix_timestamp() - u); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_float u) const {
+    int64_t integral_part = std::floor(u);
+    int64_t us_part = (u - integral_part) * flex_date_time::MICROSECONDS_PER_SECOND;
+    t.set_posix_timestamp(t.posix_timestamp() - integral_part);
+    auto microsecond = t.microsecond() - us_part;
+    if (microsecond < 0) {
+      t.set_posix_timestamp(t.posix_timestamp() - 1);
+      microsecond += flex_date_time::MICROSECONDS_PER_SECOND;
+    }
+    t.set_microsecond(microsecond);
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_int& u) const { t -= u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_float& u) const { t -= u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_float& t, const flex_int& u) const { t -= u; }
@@ -409,11 +454,19 @@ struct multiply_equal_operator{
  */
 struct get_datetime_visitor {
   template <typename T>
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(T t) const { FLEX_TYPE_ASSERT(false); return flex_date_time(0,0); }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_undefined t) const { return flex_date_time(0,0); }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_int i) const {return flex_date_time(i,0); }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_date_time dt) const {return dt;}
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_float i) const {return flex_date_time((float)i,0); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(T t) const { FLEX_TYPE_ASSERT(false); return flex_date_time(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_undefined t) const { return flex_date_time(); }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_int i) const {
+    return flex_date_time(i); 
+  }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(const flex_date_time& dt) const {
+    return dt;
+  }
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_date_time operator()(flex_float i) const {
+    flex_date_time ret;
+    ret.set_microsecond_res_timestamp(i);
+    return ret;
+  }
 };
 
 
@@ -427,7 +480,9 @@ struct get_int_visitor {
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(T t) const { FLEX_TYPE_ASSERT(false); return 0; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_undefined t) const { return 0; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_int i) const {return i; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_date_time dt) const { return dt.first;}
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_date_time dt) const { 
+    return dt.posix_timestamp();
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(flex_float i) const {return i; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_int operator()(const flex_string& t) const { return std::atoll(t.c_str()); }
 };
@@ -441,7 +496,9 @@ struct get_float_visitor {
   template <typename T>
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(T t) const { FLEX_TYPE_ASSERT(false); return 0.0; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(flex_undefined t) const { return 0.0; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(flex_date_time dt) const { return dt.first;}
+  inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(flex_date_time dt) const { 
+    return dt.microsecond_res_timestamp();
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(flex_int i) const {return i; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(flex_float i) const {return i; }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_float operator()(const flex_string& t) const { return std::atof(t.c_str()); }
@@ -458,7 +515,6 @@ struct get_string_visitor {
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_string operator()(flex_undefined u) const { return flex_string(); }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_string operator()(flex_float i) const { return tostr(i); }
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_string operator()(flex_int i) const { return tostr(i); }
-  //i.seond is stored at the granularity of half and hour.
   flex_string operator()(const flex_date_time& i) const;
   inline FLEX_ALWAYS_INLINE_FLATTEN flex_string operator()(const flex_string& i) const { return i; }
 
@@ -550,10 +606,16 @@ struct soft_assignment_visitor {
   template <typename T, typename U>
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(T& t, const U& u) const { FLEX_TYPE_ASSERT(false); }
   
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const { t.first = u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_int u) const {
+    t = flex_date_time(u);
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_date_time u) const { t = get_int_visitor()(u); }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_float& t, const flex_date_time u) const { t = get_float_visitor()(u); }
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_float u) const { t.first = (int64_t)u; }
+  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_float u) const { 
+    flex_date_time dt;
+    dt.set_microsecond_res_timestamp(u);
+    t = dt;
+  }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& t, const flex_date_time u) const { t = u; }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_string& t, const flex_date_time u) const { t = get_string_visitor()(u); }
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_int& t, const flex_int u) const { t = u; }
@@ -580,9 +642,6 @@ struct serializer {
   oarchive& oarc;
   template <typename T>
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(const T& i) const { oarc << i; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(const flex_date_time& i) const { 
-    oarc << *reinterpret_cast<const int64_t*>(&i);
-  }
 };
 
 
@@ -595,14 +654,6 @@ struct deserializer {
   iarchive& iarc;
   template <typename T>
   inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(T& i) const { iarc >> i; }
-  inline FLEX_ALWAYS_INLINE_FLATTEN void operator()(flex_date_time& i) const { 
-    union {
-      flex_date_time dt;
-      int64_t val;
-    } date_time_serialized;
-    iarc >> date_time_serialized.val;
-    i = date_time_serialized.dt;
-  }
 };
 
 
@@ -662,10 +713,14 @@ struct city_hash_visitor {
     return graphlab::hash64(t);
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN size_t operator()(flex_date_time t) const {
-    return graphlab::hash64(get_int_visitor()(t));
+    auto ret = graphlab::hash64_combine(
+        graphlab::hash64(t.posix_timestamp()),
+        graphlab::hash64(t.time_zone_offset()));
+    return graphlab::hash64_combine(ret, graphlab::hash64(t.microsecond()));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN size_t operator()(const flex_float& t) const {
-    return *reinterpret_cast<const size_t*>(&t);
+    flex_float t2 = std::isnan(t) ? NAN : t;
+    return graphlab::hash64(*reinterpret_cast<const size_t*>(&t2));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN size_t operator()(const flex_string& t) const {
     return graphlab::hash64(t);
@@ -690,13 +745,17 @@ struct city_hash128_visitor {
     return 0;
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(flex_date_time t) const {
-    return graphlab::hash128((long long)(get_int_visitor()(t)));
+    auto ret = graphlab::hash128_combine(
+        graphlab::hash128(t.posix_timestamp()),
+        graphlab::hash128(t.time_zone_offset()));
+    return graphlab::hash128_combine(ret, graphlab::hash128(t.microsecond()));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(flex_int t) const {
     return graphlab::hash128((long long)(t));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(const flex_float& t) const {
-    return graphlab::hash128(reinterpret_cast<const char*>(&t), sizeof(double));
+    flex_float t2 = std::isnan(t) ? NAN : t;
+    return graphlab::hash128(*reinterpret_cast<const size_t*>(&t2));
   }
   inline FLEX_ALWAYS_INLINE_FLATTEN uint128_t operator()(const flex_string& t) const {
     return graphlab::hash128(t);

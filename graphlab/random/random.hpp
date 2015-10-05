@@ -198,7 +198,7 @@ namespace graphlab {
        */
       inline double gaussian(const double mean = double(0), 
                              const double stdev = double(1)) {
-        boost::normal_distribution<double> normal_dist(mean,stdev);
+        boost::normal_distribution<double> normal_dist(mean, stdev);
         mut.lock();
         const double result = normal_dist(real_rng);
         mut.unlock();
@@ -214,6 +214,18 @@ namespace graphlab {
         return gaussian(mean, stdev);
       } // end of normal
 
+      /**
+       * Generate a cauchy random variable with zero location and unit
+       * scale.
+       */
+      inline double cauchy(const double location = double(0), 
+                           const double scale = double(1)) {
+        boost::cauchy_distribution<double> cauchy_dist(location, scale);
+        mut.lock();
+        const double result = cauchy_dist(real_rng);
+        mut.unlock();
+        return result;
+      } // end of cauchy
 
       inline bool bernoulli(const double p = double(0.5)) {
         boost::bernoulli_distribution<double> dist(p);
@@ -427,6 +439,16 @@ namespace graphlab {
     inline double normal(const double mean = double(0), 
                          const double stdev = double(1)) {
       return get_source().normal(mean, stdev);
+    }
+
+    /**
+     * \ingroup random
+     * Generate a cauchy random variable with zero location and unit
+     * scale.
+     */
+    inline double cauchy(const double location = double(0), 
+                         const double scale = double(1)) {
+      return get_source().cauchy(location, scale);
     }
 
     /**
