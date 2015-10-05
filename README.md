@@ -12,7 +12,7 @@ Minimum Requirements
 --------------------
 *Linux*:
 
-- GraphLab Create >= 1.5 installation
+- GraphLab Create >= 1.6.1 installation
 - gcc 4.8 and above
 
 *Mac*:
