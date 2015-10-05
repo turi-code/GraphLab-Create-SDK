@@ -402,19 +402,26 @@ class flexible_type {
   /**
    * Converts the current flexible type to a datetime type containing
    * posix_timestamp value and timezone offset.
-   * The timezone offset is integral in \b half-hour increments.
-   * i.e. a offset of 8 means timezone +4
+   * The timezone offset is integral in \b fifteen-minute increments.
+   * i.e. a offset of 8 means timezone +2
    */
-  flexible_type& set_date_time_from_timestamp_and_offset(const std::pair<flex_int,int32_t> & datetime);
+  flexible_type& set_date_time_from_timestamp_and_offset(const std::pair<flex_int,int32_t> & datetime,
+                                                         const int32_t microsecond=0);
+
 
   /**
    * Where the current flexible_type contains a datetime type, returns
    * the datetime as a pair of posix timestamp value and its timezone offset.
    *
-   * The timezone offset is integral in \b half-hour increments.
-   * i.e. a offset of 8 means timezone +4
+   * The timezone offset is integral in \b fifteen-minute increments.
+   * i.e. a offset of 8 means timezone +2
    */
-  std::pair<flex_int,int32_t> get_date_time_as_timestamp_and_offset();
+  std::pair<flex_int,int32_t> get_date_time_as_timestamp_and_offset() const;
+
+  /**
+   * Gets the date_time microsecond value
+   */
+  int32_t get_date_time_microsecond() const;
 
   /**
    * Swaps contents with another flexible_type
@@ -1168,24 +1175,6 @@ class flexible_type {
    */
   void load(iarchive& iarc);
 
-  /**
-   * Returns a tag value associated with this instance of the flexible_type.
-   * Note that the tag value is not copied between instances of the
-   * flexible_type.
-   *
-   * \deprecated
-   */
-  uint32_t& tag();
-
-  /**
-   * Returns a tag value associated with this instance of the flexible_type.
-   * Note that the tag value is not copied between instances of the
-   * flexible_type.
-   *
-   * \deprecated
-   */
-  const uint32_t& tag() const;
-
  private:
   /*
    * union over the data types.
@@ -1201,17 +1190,15 @@ class flexible_type {
     std::pair<atomic<size_t>, flex_dict>* dictval;
     std::pair<atomic<size_t>, flex_image>* imgval;
     flex_date_time dtval;
+
+    struct {
+      char padding[sizeof(flex_date_time)];
+      flex_type_enum stored_type;
+    };
   } val;
-  // pad to 16 bytes. This is here as opposed to the end for
-  // a good reason of endianness. This allows the flexible_type to be unioned
-  // with two 8 byte words
-  char __reserved[3];
-  flex_type_enum stored_type;
-  //  Unused. Deprecated.
-  uint32_t tag_value = 0;
 
   inline FLEX_ALWAYS_INLINE_FLATTEN void ensure_unique() {
-    switch(stored_type){
+    switch(val.stored_type){
      case flex_type_enum::STRING:
        if (val.strval->first.value == 1) return;
        else {
@@ -1385,17 +1372,23 @@ inline void swap(graphlab::flexible_type& a, graphlab::flexible_type& b) noexcep
 
 namespace graphlab {
 
-inline FLEX_ALWAYS_INLINE std::pair<flex_int,int32_t> flexible_type::get_date_time_as_timestamp_and_offset() {
+inline FLEX_ALWAYS_INLINE std::pair<flex_int,int32_t> flexible_type::get_date_time_as_timestamp_and_offset() const {
   std::pair<flex_int,int32_t> ret;
-  ret.first = val.dtval.first;
-  ret.second = val.dtval.second;
+  ret.first = val.dtval.posix_timestamp();
+  ret.second = val.dtval.time_zone_offset();
   return ret;
 }
 
-inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::set_date_time_from_timestamp_and_offset (const std::pair<flex_int,int32_t> & datetime) {
+inline FLEX_ALWAYS_INLINE int32_t flexible_type::get_date_time_microsecond() const {
+  return val.dtval.microsecond();
+}
+
+
+inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::set_date_time_from_timestamp_and_offset (const std::pair<flex_int,int32_t> & datetime, const int32_t microseconds) {
   reset(flex_type_enum::DATETIME);
-  val.dtval.first = datetime.first;
-  val.dtval.second = datetime.second;
+  val.dtval.set_posix_timestamp(datetime.first);
+  val.dtval.set_time_zone_offset(datetime.second);
+  val.dtval.set_microsecond(microseconds);
   return *this;
 }
 
@@ -1525,7 +1518,10 @@ inline FLEX_ALWAYS_INLINE const flex_image& flexible_type::get<flex_image>() con
 
 
 //constructors
-inline FLEX_ALWAYS_INLINE flexible_type::flexible_type() noexcept : stored_type(flex_type_enum::INTEGER) { val.intval = 0; }
+inline FLEX_ALWAYS_INLINE flexible_type::flexible_type() noexcept { 
+  val.intval = 0;
+  val.stored_type = flex_type_enum::INTEGER;
+}
 
 template <typename T>
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(std::initializer_list<T>&& list) :flexible_type() {
@@ -1560,14 +1556,14 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const T& other, t
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(flexible_type&& other)  noexcept: flexible_type() {
   val = other.val;
-  stored_type = other.get_type();
-  other.stored_type = flex_type_enum::INTEGER;
+  val.stored_type = other.get_type();
+  other.val.stored_type = flex_type_enum::INTEGER;
 }
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type::flexible_type(const flexible_type&& other)  noexcept: flexible_type() {
   val = other.val;
-  stored_type = other.get_type();
-  incref(val, stored_type);
+  val.stored_type = other.get_type();
+  incref(val, val.stored_type);
 }
 
 template <typename T>
@@ -1585,38 +1581,38 @@ inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::soft_assign(cons
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type& other)noexcept {
   if (&other == this) return *this;
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   val = other.val;
-  stored_type = other.get_type();
-  incref(val, stored_type);
+  val.stored_type = other.get_type();
+  incref(val, val.stored_type);
   return *this;
 }
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type& other)noexcept {
   if (__builtin_expect(&other == this, 0)) return *this;
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   val = other.val;
-  stored_type = other.get_type();
-  incref(val, stored_type);
+  val.stored_type = other.get_type();
+  incref(val, val.stored_type);
   return *this;
 }
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(const flexible_type&& other)  noexcept{
   if (__builtin_expect(&other == this, 0)) return *this;
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   val = other.val;
-  stored_type = other.get_type();
-  incref(val, stored_type);
+  val.stored_type = other.get_type();
+  incref(val, val.stored_type);
   return *this;
 }
 
 
 inline FLEX_ALWAYS_INLINE_FLATTEN flexible_type& flexible_type::operator=(flexible_type&& other)  noexcept{
   if (__builtin_expect(&other == this, 0)) return *this;
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   val = other.val;
-  stored_type = other.get_type();
-  other.stored_type = flex_type_enum::INTEGER;
+  val.stored_type = other.get_type();
+  other.val.stored_type = flex_type_enum::INTEGER;
   return *this;
 }
 
@@ -1657,12 +1653,12 @@ flexible_type::operator=(T&& other) {
 
 inline FLEX_ALWAYS_INLINE_FLATTEN void flexible_type::reset(flex_type_enum target_type) {
   // delete old value
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   // clear the value
   val.intval = 0;
 
   // switch types
-  stored_type = target_type;
+  val.stored_type = target_type;
 
   // construct the new type
   switch(get_type()) {
@@ -1696,15 +1692,14 @@ inline FLEX_ALWAYS_INLINE_FLATTEN void flexible_type::reset(flex_type_enum targe
 
 
 inline FLEX_ALWAYS_INLINE_FLATTEN void flexible_type::reset() {
-  decref(val, stored_type);
+  decref(val, val.stored_type);
   val.intval = 0;
   // switch types
-  stored_type = flex_type_enum::INTEGER;
+  val.stored_type = flex_type_enum::INTEGER;
 }
 
 
 inline FLEX_ALWAYS_INLINE_FLATTEN void flexible_type::swap(flexible_type& b) {
-  std::swap(stored_type, b.stored_type);
   std::swap(val, b.val);
 }
 
@@ -1722,7 +1717,7 @@ inline FLEX_ALWAYS_INLINE const T& flexible_type::get() const {
 
 
 inline flex_type_enum FLEX_ALWAYS_INLINE flexible_type::get_type() const {
-  return stored_type;
+  return val.stored_type;
 }
 
 
@@ -2306,14 +2301,6 @@ inline FLEX_ALWAYS_INLINE_FLATTEN void flexible_type::push_back(const flexible_t
 }
 
 
-inline FLEX_ALWAYS_INLINE uint32_t& flexible_type::tag() {
-  return tag_value;
-}
-
-inline FLEX_ALWAYS_INLINE const uint32_t& flexible_type::tag() const {
-  return tag_value;
-}
-
 
 inline FLEX_ALWAYS_INLINE void flexible_type::save(oarchive& oarc) const {
   // in earlier versions of the serializer, a 4 byte tag value was saved 
@@ -2329,6 +2316,7 @@ inline FLEX_ALWAYS_INLINE void flexible_type::load(iarchive& iarc) {
   unsigned char c;
   iarc >> c;
   if (c < 128) {
+    int32_t tag_value;
     // old version of flexble_type saves the tag
     iarc >> tag_value;
     reset(flex_type_enum(c));

@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <chrono>
+#include <graphlab/parallel/atomic.hpp>
 #include <graphlab/logger/logger.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/locks.hpp>
@@ -27,7 +28,6 @@
 #include <graphlab/cppipc/client/console_cancel_handler.hpp>
 #include <exceptions/error_types.hpp>
 #include <cctype>
-#include <graphlab/random/random.hpp>
 #include <atomic>
 
 // forward declaration of key_value
@@ -217,6 +217,7 @@ class EXPORT comm_client {
   libfault::async_request_socket *control_socket = NULL;
   libfault::subscribe_socket subscribesock;
   libfault::socket_receive_pollset pollset;
+  graphlab::atomic<size_t> m_command_id;
   
   // a map of a string representation of the function pointer 
   // to the name. Why a string representation of a function pointer you ask.
@@ -262,6 +263,11 @@ class EXPORT comm_client {
 
   /// Validates the authentication stack on the reply message
   bool validate_auth(reply_message& reply);
+
+  /** Checks is the pid set with set_server_alive_watch_pid is running.
+   * Sets server_running to false if pid is no longer running.
+   */
+  void poll_server_pid_is_running();
 
   /**
    * Convert the auxiliary addresses we get back from the server to a real IP
@@ -347,6 +353,11 @@ class EXPORT comm_client {
    */
   bool cancel_handling_enabled = false;
 
+  /**
+   * The pid to watch to test if the server is alive
+   */
+  int32_t server_alive_watch_pid = 0;
+
  public:
 
   /**
@@ -397,6 +408,12 @@ class EXPORT comm_client {
    */
   comm_client(std::string name, void* zmq_ctx);
 
+  /**
+   * Sets a pid to watch. If this pid goes away, server is considered dead.
+   * This is a more robust way compared to "pings" for local interprocess
+   * communication. Set to 0 to disable.
+   */
+  void set_server_alive_watch_pid(int32_t pid);
 
   /**
    * Initialize the comm_client, called right inside the constructor.
@@ -646,7 +663,7 @@ class EXPORT comm_client {
 
     // Set the command id
     // 0 and uint64_t(-1) have special meaning, so don't send those
-    size_t command_id = graphlab::random::fast_uniform<size_t>(1, uint64_t(-1)-1);
+    size_t command_id = m_command_id.inc();
     auto ret = msg.properties.insert(std::make_pair<std::string, std::string>(
           "command_id", std::to_string(command_id)));
     ASSERT_TRUE(ret.second);
