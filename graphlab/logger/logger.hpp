@@ -73,7 +73,6 @@
 #include <graphlab/logger/backtrace.hpp>
 #include <graphlab/util/code_optimization.hpp>
 
-
 /**
  * \def LOG_FATAL
  *   Used for fatal and probably irrecoverable conditions
@@ -354,6 +353,17 @@ struct streambuff_tls_entry {
 };
 }
 
+#define LOG_DEBUG_WITH_PID(...)                                         \
+  do {                                                                  \
+    auto __log_funct = [&]() {                                          \
+      std::ostringstream ss;                                            \
+      ss << "PID-" << global_logger().get_pid() << ": ";                \
+      ss << __VA_ARGS__;                                                \
+      logstream(LOG_DEBUG) << ss.str() << std::endl;                    \
+    };                                                                  \
+    if(LOG_DEBUG >= global_logger().get_log_level()) { __log_funct(); } \
+  } while(0)
+
 
 extern void __print_back_trace();
 
@@ -378,11 +388,28 @@ class file_logger{
   */
   bool set_log_file(std::string file);
 
-  /// If consolelog is true, subsequent logger output will be written to stderr
-  void set_log_to_console(bool consolelog) {
+  /// If consolelog is true, subsequent logger output will be written
+  /// to stdout / stderr.  If log_to_stderr is true, all output is
+  /// logged to stderr.
+  void set_log_to_console(bool consolelog, bool _log_to_stderr = false) {
     log_to_console = consolelog;
+    log_to_stderr = _log_to_stderr;
   }
 
+  /// If consolelog is true, subsequent logger output will be written
+  /// to stdout / stderr.  If log_to_stderr is true, all output is
+  /// logged to stderr.
+  void set_pid(size_t pid) {
+    reference_pid = pid;
+  }
+
+  /// If consolelog is true, subsequent logger output will be written
+  /// to stdout / stderr.  If log_to_stderr is true, all output is
+  /// logged to stderr.
+  size_t get_pid() const {
+    return reference_pid;
+  }
+  
   /// Returns the current logger file.
   std::string get_log_file(void) {
     return log_file;
@@ -541,7 +568,10 @@ class file_logger{
   pthread_mutex_t mut;
 
   bool log_to_console;
+  bool log_to_stderr;
   int log_level;
+
+  size_t reference_pid = size_t(-1);
 
   // LOG_NONE is the "highest" log level
   std::function<void(int lineloglevel, const char* buf, size_t len)> callback[LOG_NONE];
