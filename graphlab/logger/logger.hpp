@@ -72,6 +72,7 @@
 #include <graphlab/logger/fail_method.hpp>
 #include <graphlab/logger/backtrace.hpp>
 #include <graphlab/util/code_optimization.hpp>
+#include <process/process_util.hpp>
 
 /**
  * \def LOG_FATAL
