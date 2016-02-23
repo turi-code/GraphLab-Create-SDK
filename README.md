@@ -1,12 +1,14 @@
 GraphLab Create 1.8 SDK (BETA)
 ==============================
 
-The GraphLab Create SDK aims to provide 3rd party extensibility to GraphLab Create. The SDK provides:
+The GraphLab Create SDK aims to provide 3rd party extensibility to GraphLab
+Create. The SDK provides:
 
 - A really simple C++ to GraphLab Create to Python FFI interface.
-High level native access to the GraphLab Create datastructures (SArray, SFrame and SGraph)
-
-- It also provides a way for certain SFrame / SGraph Python operators which take functions (like SArray.apply, SFrame.apply or SGraph.triple_apply) to use native functions instead of Python functions.
+- High level native access to the GraphLab Create datastructures (SArray, SFrame and SGraph)
+- It also provides a way for certain SFrame / SGraph Python operators which
+  take functions (like SArray.apply, SFrame.apply or SGraph.triple_apply) to
+  use native functions instead of Python functions.
 
 Minimum Requirements
 --------------------
@@ -46,7 +48,8 @@ graphlab-sdk$ ipython
 
 Documentation
 -------------
-[https://dato.com/products/create/sdk/docs](https://dato.com/products/create/sdk/docs/index.html)
+
+For extensive documentation, refer to [https://dato.com/products/create/sdk/docs](https://dato.com/products/create/sdk/docs/index.html).
 
 Alternatively, you can type `make doc` to build local documentations (requires Doxygen).
 
