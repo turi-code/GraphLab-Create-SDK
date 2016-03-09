@@ -14,7 +14,6 @@
 #include <iostream>
 #include <functional>
 #include <typeindex>
-#include <graphlab/logger/assertions.hpp>
 #include <graphlab/parallel/atomic.hpp>
 #include <graphlab/util/int128_types.hpp>
 //#define FLEX_TYPE_ASSERT DASSERT_TRUE
