@@ -1,5 +1,5 @@
-GraphLab Create 1.9 SDK (BETA)
-==============================
+GraphLab Create SDK
+===================
 
 The GraphLab Create SDK aims to provide 3rd party extensibility to GraphLab
 Create. The SDK provides:
