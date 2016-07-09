@@ -1,3 +1,5 @@
+.PHONY: doc clean all
+
 CXX := g++
 CXXFLAGS := -std=c++11 -I . -shared -fPIC
 
@@ -28,4 +30,4 @@ clean:
 
 
 #### All targets ####
-all: sdk_example 
+all: sdk_example

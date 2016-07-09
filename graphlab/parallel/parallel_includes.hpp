@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2015 Dato, Inc.
+ * Copyright (C) 2016 Turi
  * All rights reserved.
  *
  * This software may be modified and distributed under the terms
@@ -28,8 +28,14 @@
  *
  */
 
+#ifndef GRAPHLAB_PARALLEL_PARALLEL_ALL_HPP_
+#define GRAPHLAB_PARALLEL_PARALLEL_ALL_HPP_
 
+#include <graphlab/parallel/atomic.hpp>
+#include <graphlab/parallel/atomic_ops.hpp>
+#include <parallel/atomic_add_vector2.hpp>
+#include <graphlab/parallel/pthread_tools.hpp>
+#include <graphlab/parallel/lambda_omp.hpp>
+#include <graphlab/parallel/mutex.hpp>
 
-// #include <atomic.hpp>
-// #include <parallel/pthread_tools.hpp>
-
+#endif
