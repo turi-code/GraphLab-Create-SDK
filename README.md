@@ -27,7 +27,7 @@ The sdk also depends on boost 1.55 or above (headers only). We've included a sub
 Download SDK
 -------------
 ```
-git clone https://github.com/dato-code/GraphLab-Create-SDK.git graphlab-sdk
+git clone https://github.com/turi-code/GraphLab-Create-SDK.git graphlab-sdk
 ```
 
 Build Examples
@@ -49,7 +49,7 @@ graphlab-sdk$ ipython
 Documentation
 -------------
 
-For extensive documentation, refer to [https://dato.com/products/create/sdk/docs](https://dato.com/products/create/sdk/docs/index.html).
+For extensive documentation, refer to [https://turi.com/products/create/sdk/docs](https://turi.com/products/create/sdk/docs/index.html).
 
 Alternatively, you can type `make doc` to build local documentations (requires Doxygen).
 
