@@ -1,3 +1,6 @@
+# **THIS REPOSITORY IS DEPRECATED.**
+# THE FUNCTIONALITY HAS MOVED TO [Turi Create](https://github.com/apple/turicreate). 
+
 GraphLab Create SDK
 ===================
 
